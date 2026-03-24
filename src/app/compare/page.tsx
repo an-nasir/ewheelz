@@ -87,8 +87,9 @@ export default async function ComparePage({ searchParams }: Props) {
     orderBy: [{ brand: "asc" }, { model: "asc" }],
   });
 
+  // Cap at 3 models maximum
   const slugs = searchParams.slugs
-    ? searchParams.slugs.split(",").map(s => s.trim()).filter(Boolean)
+    ? searchParams.slugs.split(",").map(s => s.trim()).filter(Boolean).slice(0, 3)
     : [];
 
   const rawModels = slugs.length >= 2
@@ -110,11 +111,11 @@ export default async function ComparePage({ searchParams }: Props) {
   });
 
   const popular = [
-    { label: "Atto 3 vs MG ZS",      slugs: "byd-atto-3,mg-zs-ev" },
-    { label: "BYD Seal vs Tesla 3",   slugs: "byd-seal,tesla-model-3" },
-    { label: "Seal vs Ioniq 5",       slugs: "byd-seal,hyundai-ioniq-5" },
-    { label: "Lumin vs Honri VE",     slugs: "changan-lumin,honri-ve" },
-    { label: "All BYDs",              slugs: "byd-atto-3,byd-seal,byd-shark-6" },
+    { label: "Atto 3 vs MG ZS",         slugs: "byd-atto-3,mg-zs-ev" },
+    { label: "BYD Seal vs Tesla 3",      slugs: "byd-seal,tesla-model-3" },
+    { label: "Seal vs Ioniq 5",          slugs: "byd-seal,hyundai-ioniq-5" },
+    { label: "Lumin vs Honri VE",        slugs: "changan-lumin,honri-ve" },
+    { label: "Atto 3 vs Seal vs MG ZS",  slugs: "byd-atto-3,byd-seal,mg-zs-ev" },  // 3-way
   ];
 
   return (
@@ -133,7 +134,7 @@ export default async function ComparePage({ searchParams }: Props) {
           </div>
           <h1 className="text-3xl sm:text-4xl font-black text-white mb-2">Compare EVs</h1>
           <p className="text-blue-100 text-sm max-w-lg mb-6">
-            Pick any 2–4 EVs and compare specs, battery, range, and charging side-by-side.
+            Pick up to 3 EVs and compare specs, battery, range, and charging side-by-side.
           </p>
 
           {/* Popular comparison chips */}
@@ -160,7 +161,13 @@ export default async function ComparePage({ searchParams }: Props) {
         {/* ── EV Picker ── */}
         <div style={{ background: "#FFFFFF", border: "1px solid #E6E9F2", borderRadius: "16px", padding: "1.25rem", boxShadow: "0 2px 8px rgba(99,102,241,0.06)" }}>
           <div className="flex items-center justify-between mb-3">
-            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Select EVs to Compare</p>
+            <div className="flex items-center gap-3">
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Select EVs to Compare</p>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                style={{ background: slugs.length >= 3 ? "#FEF3C7" : "#EEF2FF", color: slugs.length >= 3 ? "#92400E" : "#4F46E5", border: `1px solid ${slugs.length >= 3 ? "#FCD34D" : "#C7D2FE"}` }}>
+                {slugs.length}/3 selected
+              </span>
+            </div>
             {slugs.length > 0 && (
               <Link href="/compare" className="text-xs font-medium transition-colors text-slate-400 hover:text-red-500">
                 Clear all ×
@@ -170,19 +177,26 @@ export default async function ComparePage({ searchParams }: Props) {
           <div className="flex flex-wrap gap-2">
             {(allModels as any[]).map((m: any) => {
               const isSelected = slugs.includes(m.slug);
+              const atMax = !isSelected && slugs.length >= 3;
               const newSlugs = isSelected
                 ? slugs.filter(s => s !== m.slug)
-                : [...slugs, m.slug];
+                : slugs.length < 3 ? [...slugs, m.slug] : slugs;
               return (
                 <Link
                   key={m.slug}
-                  href={`/compare?slugs=${newSlugs.join(",")}`}
+                  href={atMax ? "#" : `/compare?slugs=${newSlugs.join(",")}`}
                   className="text-xs px-3 py-1.5 rounded-xl font-medium transition-all"
                   style={isSelected ? {
                     background: "linear-gradient(135deg,#6366F1,#8B5CF6)",
                     color: "#FFFFFF",
                     fontWeight: 700,
                     boxShadow: "0 2px 8px rgba(99,102,241,0.30)",
+                  } : atMax ? {
+                    background: "#F1F5F9",
+                    color: "#CBD5E1",
+                    border: "1px solid #E2E8F0",
+                    cursor: "not-allowed",
+                    opacity: 0.5,
                   } : {
                     background: "#F6F8FF",
                     color: "#475569",
@@ -202,6 +216,12 @@ export default async function ComparePage({ searchParams }: Props) {
               ⚡ Select one more EV to start comparing.
             </p>
           )}
+          {slugs.length >= 3 && (
+            <p className="mt-3 text-xs rounded-xl px-3 py-2 font-medium"
+              style={{ background: "#F0FDF4", color: "#166534", border: "1px solid #86EFAC" }}>
+              ✓ 3 EVs selected — maximum reached. Deselect one to swap.
+            </p>
+          )}
         </div>
 
         {/* ── Empty state ── */}
@@ -212,9 +232,9 @@ export default async function ComparePage({ searchParams }: Props) {
               style={{ background: "linear-gradient(135deg,#EEF2FF,#F5F3FF)", border: "1px solid #C7D2FE" }}>
               ⚖️
             </div>
-            <h3 className="font-bold text-slate-900 text-lg mb-2">Pick 2–4 EVs above</h3>
+            <h3 className="font-bold text-slate-900 text-lg mb-2">Pick 2 or 3 EVs above</h3>
             <p className="text-slate-500 text-sm max-w-xs">
-              Select any combination of EV models to see a detailed side-by-side comparison.
+              Select 2 or 3 EV models to see a detailed side-by-side comparison of specs, battery, range, and charging.
             </p>
           </div>
         )}
@@ -223,60 +243,62 @@ export default async function ComparePage({ searchParams }: Props) {
         {models.length >= 2 && (
           <div className="space-y-5">
 
-            {/* EV header cards */}
-            <div className="grid gap-4" style={{ gridTemplateColumns: `160px repeat(${models.length}, 1fr)` }}>
-              <div />
-              {(models as any[]).map((m: any, i: number) => {
-                const bs = brandStyle(m.brand);
-                return (
-                  <div key={m.id} className="rounded-2xl p-5 relative overflow-hidden"
-                    style={{ background: bs.bg, border: `1px solid ${bs.border}`, boxShadow: "0 4px 16px rgba(15,23,42,0.06)" }}>
-                    {/* Accent bar top */}
-                    <div className="absolute top-0 left-0 right-0 h-1 rounded-t-2xl"
-                      style={{ background: `linear-gradient(90deg, ${bs.accent}, ${bs.accent}88)` }} />
+            {/* EV header cards — scrollable on mobile */}
+            <div className="overflow-x-auto -mx-4 sm:mx-0">
+              <div className="flex gap-4 px-4 sm:px-0 pb-1" style={{ minWidth: `${models.length * 200}px` }}>
+                {(models as any[]).map((m: any, i: number) => {
+                  const bs = brandStyle(m.brand);
+                  return (
+                    <div key={m.id} className="flex-1 rounded-2xl p-5 relative overflow-hidden"
+                      style={{ minWidth: 180, background: bs.bg, border: `1px solid ${bs.border}`, boxShadow: "0 4px 16px rgba(15,23,42,0.06)" }}>
+                      {/* Accent bar top */}
+                      <div className="absolute top-0 left-0 right-0 h-1 rounded-t-2xl"
+                        style={{ background: `linear-gradient(90deg, ${bs.accent}, ${bs.accent}88)` }} />
+                      {/* Remove button */}
+                      <Link href={`/compare?slugs=${slugs.filter(s => s !== m.slug).join(",")}`}
+                        className="absolute top-3 right-3 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold transition-opacity opacity-40 hover:opacity-100"
+                        style={{ background: "rgba(0,0,0,0.12)", color: "#1e293b" }}>
+                        ×
+                      </Link>
 
-                    <p className="text-xs font-bold mt-1 mb-0.5" style={{ color: bs.accent }}>{m.brand}</p>
-                    <Link href={`/ev/${m.slug}`}>
-                      <h3 className="font-black text-lg leading-tight text-slate-900 hover:underline">{m.model}</h3>
-                    </Link>
-                    {m.variant && <p className="text-slate-500 text-xs mt-0.5">{m.variant}</p>}
+                      <p className="text-xs font-bold mt-1 mb-0.5" style={{ color: bs.accent }}>{m.brand}</p>
+                      <Link href={`/ev/${m.slug}`}>
+                        <h3 className="font-black text-base leading-tight text-slate-900 hover:underline pr-6">{m.model}</h3>
+                      </Link>
+                      {m.variant && <p className="text-slate-500 text-xs mt-0.5">{m.variant}</p>}
 
-                    <div className="mt-3 flex flex-wrap gap-1.5">
-                      <span className="text-[10px] px-2 py-0.5 rounded-full font-bold"
-                        style={{ background: "rgba(255,255,255,0.70)", color: "#475569", border: "1px solid rgba(0,0,0,0.08)" }}>
-                        {m.powertrain}
-                      </span>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full font-bold"
-                        style={{ background: "rgba(255,255,255,0.70)", color: "#475569", border: "1px solid rgba(0,0,0,0.08)" }}>
-                        {m.year}
-                      </span>
-                    </div>
-
-                    {rangeEstimates[i] && (
-                      <div className="mt-3 pt-3" style={{ borderTop: `1px solid ${bs.border}` }}>
-                        <p className="text-xs text-slate-400 mb-0.5">🇵🇰 Pakistan est.</p>
-                        <p className="text-2xl font-black" style={{ color: bs.accent }}>
-                          {rangeEstimates[i]!.realWorldEstimate}
-                          <span className="text-sm font-normal text-slate-400 ml-1">km</span>
-                        </p>
+                      <div className="mt-3 flex flex-wrap gap-1.5">
+                        <span className="text-[10px] px-2 py-0.5 rounded-full font-bold"
+                          style={{ background: "rgba(255,255,255,0.70)", color: "#475569", border: "1px solid rgba(0,0,0,0.08)" }}>
+                          {m.powertrain}
+                        </span>
+                        <span className="text-[10px] px-2 py-0.5 rounded-full font-bold"
+                          style={{ background: "rgba(255,255,255,0.70)", color: "#475569", border: "1px solid rgba(0,0,0,0.08)" }}>
+                          {m.year}
+                        </span>
                       </div>
-                    )}
 
-                    <div className="mt-3 flex gap-3">
-                      <Link href={`/ev/${m.slug}`}
-                        className="text-xs font-semibold transition-colors hover:underline"
-                        style={{ color: bs.accent }}>
-                        Full specs →
-                      </Link>
-                      <Link href={`/ev-range/${m.slug}`}
-                        className="text-xs font-semibold transition-colors hover:underline"
-                        style={{ color: bs.accent }}>
-                        Range data →
-                      </Link>
+                      {rangeEstimates[i] && (
+                        <div className="mt-3 pt-3" style={{ borderTop: `1px solid ${bs.border}` }}>
+                          <p className="text-xs text-slate-400 mb-0.5">🇵🇰 Pakistan est.</p>
+                          <p className="text-2xl font-black" style={{ color: bs.accent }}>
+                            {rangeEstimates[i]!.realWorldEstimate}
+                            <span className="text-sm font-normal text-slate-400 ml-1">km</span>
+                          </p>
+                        </div>
+                      )}
+
+                      <div className="mt-3 flex gap-3">
+                        <Link href={`/ev/${m.slug}`}
+                          className="text-xs font-semibold transition-colors hover:underline"
+                          style={{ color: bs.accent }}>
+                          Full specs →
+                        </Link>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
 
             {/* Spec table */}

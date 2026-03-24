@@ -24,9 +24,10 @@ const GROUPS: NavGroup[] = [
     id: "explore",
     label: "Explore",
     items: [
-      { href: "/ev",       icon: "⚡", label: "EV Database",        desc: "9 EVs available in Pakistan", color: "#6366F1" },
-      { href: "/compare",  icon: "⚖️", label: "Compare EVs",        desc: "Side-by-side spec comparison", color: "#8B5CF6" },
-      { href: "/ev-range", icon: "📊", label: "Range Reality Index", desc: "Real-world range in Pakistan", badge: "New", color: "#3B82F6" },
+      { href: "/ev",       icon: "⚡", label: "EV Database",        desc: "17 EVs tracked in Pakistan",     color: "#6366F1" },
+      { href: "/compare",  icon: "⚖️", label: "Compare EVs",        desc: "Side-by-side spec comparison",    color: "#8B5CF6" },
+      { href: "/ev-range", icon: "📊", label: "Range Reality Index", desc: "Real-world range in Pakistan",   badge: "New", color: "#3B82F6" },
+      { href: "/peos",     icon: "🇵🇰", label: "EV Readiness Quiz",  desc: "Find your perfect EV in 2 mins", badge: "P4", color: "#22C55E" },
     ],
   },
   {
@@ -199,7 +200,7 @@ export default function NavBar() {
           {/* Right actions */}
           <div className="flex items-center gap-2">
             <Link
-              href="/listings"
+              href="/listings/post"
               className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 text-[13px] font-semibold rounded-xl text-white transition-all"
               style={{
                 background: "linear-gradient(135deg,#6366F1,#8B5CF6)",
@@ -275,7 +276,7 @@ export default function NavBar() {
 
             <div className="px-3 pt-3 border-t border-[#E6E9F2] mt-2">
               <Link
-                href="/listings"
+                href="/listings/post"
                 onClick={() => setMobileOpen(false)}
                 className="block w-full py-2.5 text-white text-sm font-semibold rounded-xl text-center transition-all"
                 style={{ background: "linear-gradient(135deg,#6366F1,#8B5CF6)" }}

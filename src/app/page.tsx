@@ -288,6 +288,9 @@ export default async function HomePage() {
             <ToolCard href="/charging-map" icon="📍" title="Live Charging Map"
               desc="20+ stations with real-time status, connector types, and pricing per kWh across Pakistan."
               cta="Open map" accentColor="rgba(34,197,94,1)" />
+            <ToolCard href="/peos" icon="🇵🇰" title="EV Readiness Quiz" badge="New"
+              desc="8 questions, 2 minutes. Get your Pakistan EV Ownership Score and top 3 personalised EV picks."
+              cta="Take the quiz" accentColor="rgba(99,102,241,1)" />
           </div>
         </div>
       </section>
