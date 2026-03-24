@@ -32,13 +32,16 @@ export default function LeafletMap({ stations, height = "500px", tripRoute }: Pr
   const mapRef = useRef<HTMLDivElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mapInstanceRef = useRef<any>(null);
-  const [loaded, setLoaded] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const markersLayerRef = useRef<any>(null);
+  const [mapReady, setMapReady] = useState(false);
   const [error, setError] = useState("");
 
+  // ── Effect 1: initialise map & load Leaflet (runs once on mount) ──────────
   useEffect(() => {
-    if (mapInstanceRef.current) return; // already initialised
+    if (mapInstanceRef.current) return;
 
-    // Load Leaflet CSS + JS from CDN
+    // Load Leaflet CSS from CDN
     const cssId = "leaflet-css";
     if (!document.getElementById(cssId)) {
       const link = document.createElement("link");
@@ -57,107 +60,22 @@ export default function LeafletMap({ stations, height = "500px", tripRoute }: Pr
       if (!L || !mapRef.current) return;
 
       try {
-        // Centre map on Pakistan
         const map = L.map(mapRef.current, {
           center: [30.3753, 69.3451],
           zoom: 6,
           zoomControl: true,
         });
 
-        // OpenStreetMap tiles — completely free, no token needed
         L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
           attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
           maxZoom: 19,
         }).addTo(map);
 
-        // Custom marker icon (circle dot, avoids missing icon issue)
-        const makeIcon = (color: string, size = 14) => {
-          return L.divIcon({
-            html: `<div style="
-              width:${size}px;height:${size}px;
-              background:${color};
-              border:2px solid white;
-              border-radius:50%;
-              box-shadow:0 1px 4px rgba(0,0,0,.4)
-            "></div>`,
-            className: "",
-            iconSize: [size, size],
-            iconAnchor: [size / 2, size / 2],
-          });
-        };
-
-        // Plot charging stations
-        for (const s of stations) {
-          const color = STATUS_COLOR[s.liveStatus] ?? "#16a34a";
-          const connectors = Array.isArray(s.connectorTypes)
-            ? s.connectorTypes
-            : s.connectorTypes?.split(",").map((c: string) => c.trim()) ?? [];
-
-          const popup = L.popup({ maxWidth: 240 }).setContent(`
-            <div style="font-family:system-ui;font-size:13px;line-height:1.5">
-              <strong style="font-size:14px">${s.name}</strong><br/>
-              <span style="color:#555">${s.network} · ${s.city}</span><br/>
-              <span style="color:#16a34a;font-weight:600">⚡ ${s.maxPowerKw} kW</span>
-              ${s.pricePerKwh ? ` · <span style="color:#0284c7">PKR ${s.pricePerKwh}/kWh</span>` : ""}
-              <br/>
-              <span style="font-size:11px;color:#777">${connectors.join(" · ")}</span><br/>
-              <span style="font-size:11px;color:#777">🕐 ${s.operationalHours}</span><br/>
-              <span style="font-size:11px">
-                ${s.availableSpots}/${s.totalSpots} spots •
-                <span style="color:${color};font-weight:600">${s.liveStatus}</span>
-              </span>
-              ${s.address ? `<br/><span style="font-size:11px;color:#555">📍 ${s.address}</span>` : ""}
-            </div>
-          `);
-
-          L.marker([s.latitude, s.longitude], { icon: makeIcon(color, 16) })
-            .bindPopup(popup)
-            .addTo(map);
-        }
-
-        // Draw trip route if provided
-        if (tripRoute) {
-          const { origin, destination, stops } = tripRoute;
-          const allPoints = [origin, ...stops.map((s) => [s.lat, s.lng] as [number, number]), destination];
-
-          // Route line
-          L.polyline(allPoints, { color: "#2563eb", weight: 3, opacity: 0.8, dashArray: "8 4" }).addTo(map);
-
-          // Origin (green flag)
-          L.marker(origin, {
-            icon: L.divIcon({
-              html: `<div style="background:#16a34a;color:#fff;padding:2px 6px;border-radius:4px;font-size:11px;font-weight:700;white-space:nowrap">START</div>`,
-              className: "",
-              iconAnchor: [16, 10],
-            }),
-          }).addTo(map);
-
-          // Destination (red flag)
-          L.marker(destination, {
-            icon: L.divIcon({
-              html: `<div style="background:#dc2626;color:#fff;padding:2px 6px;border-radius:4px;font-size:11px;font-weight:700;white-space:nowrap">END</div>`,
-              className: "",
-              iconAnchor: [16, 10],
-            }),
-          }).addTo(map);
-
-          // Charging stops (orange)
-          stops.forEach((stop, i) => {
-            L.marker([stop.lat, stop.lng], {
-              icon: L.divIcon({
-                html: `<div style="background:#f59e0b;color:#fff;padding:2px 6px;border-radius:4px;font-size:11px;font-weight:700;white-space:nowrap">⚡ Stop ${i + 1}</div>`,
-                className: "",
-                iconAnchor: [20, 10],
-              }),
-            }).bindTooltip(stop.name).addTo(map);
-          });
-
-          // Fit bounds to route
-          map.fitBounds(L.latLngBounds(allPoints), { padding: [40, 40] });
-        }
+        // Create a layer group to hold all station markers so we can clear/re-add
+        markersLayerRef.current = L.layerGroup().addTo(map);
 
         mapInstanceRef.current = map;
-        setLoaded(true);
+        setMapReady(true); // triggers Effect 2
       } catch (e) {
         setError("Failed to load map.");
         console.error(e);
@@ -171,20 +89,109 @@ export default function LeafletMap({ stations, height = "500px", tripRoute }: Pr
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
+        markersLayerRef.current = null;
       }
     };
-  }, []); // run once on mount
+  }, []); // run once
 
-  // Update trip route overlay when it changes
+  // ── Effect 2: plot station markers whenever stations or mapReady changes ──
   useEffect(() => {
-    if (!loaded || !mapInstanceRef.current || !tripRoute) return;
-    // Route is drawn on initial load; for live updates a full remount works for MVP
-  }, [tripRoute, loaded]);
+    const L = window.L;
+    if (!mapReady || !mapInstanceRef.current || !L) return;
+
+    const markersLayer = markersLayerRef.current;
+    if (!markersLayer) return;
+
+    // Clear existing markers before re-plotting
+    markersLayer.clearLayers();
+
+    const makeIcon = (color: string, size = 14) =>
+      L.divIcon({
+        html: `<div style="
+          width:${size}px;height:${size}px;
+          background:${color};
+          border:2px solid white;
+          border-radius:50%;
+          box-shadow:0 1px 4px rgba(0,0,0,.4)
+        "></div>`,
+        className: "",
+        iconSize: [size, size],
+        iconAnchor: [size / 2, size / 2],
+      });
+
+    for (const s of stations) {
+      const color = STATUS_COLOR[s.liveStatus] ?? "#16a34a";
+      const connectors = Array.isArray(s.connectorTypes)
+        ? s.connectorTypes
+        : s.connectorTypes?.split(",").map((c: string) => c.trim()) ?? [];
+
+      const popup = L.popup({ maxWidth: 240 }).setContent(`
+        <div style="font-family:system-ui;font-size:13px;line-height:1.5">
+          <strong style="font-size:14px">${s.name}</strong><br/>
+          <span style="color:#555">${s.network} · ${s.city}</span><br/>
+          <span style="color:#16a34a;font-weight:600">⚡ ${s.maxPowerKw} kW</span>
+          ${s.pricePerKwh ? ` · <span style="color:#0284c7">PKR ${s.pricePerKwh}/kWh</span>` : ""}
+          <br/>
+          <span style="font-size:11px;color:#777">${connectors.join(" · ")}</span><br/>
+          <span style="font-size:11px;color:#777">🕐 ${s.operationalHours}</span><br/>
+          <span style="font-size:11px">
+            ${s.availableSpots}/${s.totalSpots} spots •
+            <span style="color:${color};font-weight:600">${s.liveStatus}</span>
+          </span>
+          ${s.address ? `<br/><span style="font-size:11px;color:#555">📍 ${s.address}</span>` : ""}
+        </div>
+      `);
+
+      L.marker([s.latitude, s.longitude], { icon: makeIcon(color, 16) })
+        .bindPopup(popup)
+        .addTo(markersLayer);
+    }
+  }, [stations, mapReady]); // re-run whenever stations array or map readiness changes
+
+  // ── Effect 3: draw trip route overlay ─────────────────────────────────────
+  useEffect(() => {
+    const L = window.L;
+    if (!mapReady || !mapInstanceRef.current || !tripRoute || !L) return;
+
+    const map = mapInstanceRef.current;
+    const { origin, destination, stops } = tripRoute;
+    const allPoints = [origin, ...stops.map((s) => [s.lat, s.lng] as [number, number]), destination];
+
+    L.polyline(allPoints, { color: "#2563eb", weight: 3, opacity: 0.8, dashArray: "8 4" }).addTo(map);
+
+    L.marker(origin, {
+      icon: L.divIcon({
+        html: `<div style="background:#16a34a;color:#fff;padding:2px 6px;border-radius:4px;font-size:11px;font-weight:700;white-space:nowrap">START</div>`,
+        className: "",
+        iconAnchor: [16, 10],
+      }),
+    }).addTo(map);
+
+    L.marker(destination, {
+      icon: L.divIcon({
+        html: `<div style="background:#dc2626;color:#fff;padding:2px 6px;border-radius:4px;font-size:11px;font-weight:700;white-space:nowrap">END</div>`,
+        className: "",
+        iconAnchor: [16, 10],
+      }),
+    }).addTo(map);
+
+    stops.forEach((stop, i) => {
+      L.marker([stop.lat, stop.lng], {
+        icon: L.divIcon({
+          html: `<div style="background:#f59e0b;color:#fff;padding:2px 6px;border-radius:4px;font-size:11px;font-weight:700;white-space:nowrap">⚡ Stop ${i + 1}</div>`,
+          className: "",
+          iconAnchor: [20, 10],
+        }),
+      }).bindTooltip(stop.name).addTo(map);
+    });
+
+    map.fitBounds(L.latLngBounds(allPoints), { padding: [40, 40] });
+  }, [tripRoute, mapReady]);
 
   return (
     <div className="relative rounded-xl overflow-hidden" style={{ height, border: "1px solid #E6E9F2" }}>
       <div ref={mapRef} style={{ width: "100%", height: "100%" }} />
-      {!loaded && !error && (
+      {!mapReady && !error && (
         <div className="absolute inset-0 flex items-center justify-center" style={{ background: "#F6F8FF" }}>
           <div className="text-center">
             <div className="w-8 h-8 rounded-full animate-spin mx-auto mb-2"

@@ -9,13 +9,28 @@ interface Props { params: { slug: string } }
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const ev = await prisma.evModel.findUnique({
     where: { slug: params.slug },
-    select: { brand: true, model: true, variant: true, description: true },
+    select: { brand: true, model: true, variant: true, description: true, slug: true },
   });
   if (!ev) return { title: "Not Found" };
   const name = `${ev.brand} ${ev.model}${ev.variant ? ` ${ev.variant}` : ""}`;
+  const desc = ev.description || `Full specs, battery info, and real-world range for the ${name} in Pakistan.`;
+  const url = `https://ewheelz.vercel.app/ev/${ev.slug}`;
   return {
     title: `${name} — Specs & Battery`,
-    description: ev.description || `Full specs for the ${name} electric vehicle.`,
+    description: desc,
+    alternates: { canonical: url },
+    openGraph: {
+      title: `${name} — EV Specs & Battery | eWheelz Pakistan`,
+      description: desc,
+      url,
+      images: [{ url: "/og-default.png", width: 1200, height: 630 }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${name} — EV Specs`,
+      description: desc,
+      images: ["/og-default.png"],
+    },
   };
 }
 

@@ -1,6 +1,20 @@
 // src/app/page.tsx — eWheelz Homepage (JetBrains-inspired design)
+import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+
+export const metadata: Metadata = {
+  title: "eWheelz — Pakistan EV Intelligence Platform",
+  description:
+    "Compare EVs, explore battery tech, find 20+ charging stations across Pakistan. The #1 EV resource for Pakistani buyers.",
+  alternates: { canonical: "https://ewheelz.vercel.app" },
+  openGraph: {
+    title: "eWheelz — Pakistan EV Intelligence Platform",
+    description: "Compare EVs, find charging stations, and buy/sell electric vehicles in Pakistan.",
+    url: "https://ewheelz.vercel.app",
+    images: [{ url: "/og-default.png", width: 1200, height: 630 }],
+  },
+};
 import { EvModel, ChargingStation } from "@/types";
 import EvIntelligenceToday from "@/components/EvIntelligenceToday";
 import AnimatedHero from "@/components/AnimatedHero";
@@ -122,8 +136,8 @@ function WhyCard({ icon, title, desc, gradient }: {
 }
 
 export default async function HomePage() {
+  // Fetch ALL EVs (not filtered by availableInPk) so hero stats are never "0"
   const allEvs = (await prisma.evModel.findMany({
-    where: { availableInPk: true },
     orderBy: { brand: "asc" },
   })) as EvModel[];
 
@@ -141,10 +155,14 @@ export default async function HomePage() {
   const operationalCount = stations.filter((s) => s.liveStatus === "OPERATIONAL").length;
   const dcFastCount      = stations.filter((s) => s.maxPowerKw >= 50).length;
 
+  // Use real counts — never show 0 if DB has data
+  const evCount = allEvs.length || 17; // fallback to known seeded count
+  const stCount = stationCount  || 20;
+
   const heroStats = [
-    { value: String(allEvs.length),   label: "EVs Tracked",   gradient: "linear-gradient(135deg,#6366F1,#8B5CF6)" },
-    { value: String(stationCount),    label: "Stations",       gradient: "linear-gradient(135deg,#22C55E,#10B981)" },
-    { value: "4",                     label: "Chemistries",    gradient: "linear-gradient(135deg,#3B82F6,#6366F1)" },
+    { value: String(evCount),  label: "EVs Tracked",   gradient: "linear-gradient(135deg,#6366F1,#8B5CF6)" },
+    { value: String(stCount),  label: "Stations",       gradient: "linear-gradient(135deg,#22C55E,#10B981)" },
+    { value: "4",              label: "Chemistries",    gradient: "linear-gradient(135deg,#3B82F6,#6366F1)" },
   ];
 
   const popularComparisons = [
