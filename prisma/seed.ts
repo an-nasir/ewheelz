@@ -633,7 +633,240 @@ async function main() {
     },
   });
 
-  console.log("  9 EV models seeded");
+  // ─── 10. BYD Dolphin ───────────────────────────────────────────────────
+  await prisma.evModel.upsert({
+    where: { slug: "byd-dolphin" },
+    update: {},
+    create: {
+      brand: "BYD", model: "Dolphin", variant: "Standard Range",
+      slug: "byd-dolphin", year: 2024, powertrain: "BEV",
+      bodyType: "Hatchback", segment: "B", country: "China",
+      availableInPk: true, pricePkrMin: 6500000, pricePkrMax: 7500000,
+      description: "Sporty compact hatchback with BYD Blade Battery. Fun to drive city EV.",
+      specs: { create: {
+        rangeWltp: 427, rangeRealWorld: 380, batteryCapKwh: 44.9,
+        batteryType: "LFP Blade", batteryPackVolt: 400,
+        chargingAcKw: 7, chargingDcKw: 60, chargingTime080: "29 min",
+        motorPowerKw: 70, torqueNm: 180, driveType: "FWD",
+        topSpeed: 150, accel0100: 8.5, efficiencyWhKm: 119, weight: 1490,
+        platform: "e-Platform 3.0", coolingSystem: "liquid",
+      }},
+      battery: { create: {
+        chemistry: "LFP Blade", capacityKwh: 44.9, voltage: 400,
+        cellFormat: "prismatic", thermalManagement: "liquid",
+        fastChargeCycles: 3000, degradationRate: 1.5, warrantyYears: 8, cycleLife: 5000,
+      }},
+      charging: { create: [
+        { connectorType: "CCS2", maxDcKw: 60, maxAcKw: 7, chargingStandard: "CCS" },
+        { connectorType: "Type 2", maxDcKw: null, maxAcKw: 7, chargingStandard: "IEC 62196" },
+      ]},
+    },
+  });
+
+  // ─── 11. MG4 EV ────────────────────────────────────────────────────────
+  await prisma.evModel.upsert({
+    where: { slug: "mg-4-ev" },
+    update: {},
+    create: {
+      brand: "MG", model: "4 EV", variant: "Trophy",
+      slug: "mg-4-ev", year: 2024, powertrain: "BEV",
+      bodyType: "Hatchback", segment: "C", country: "China",
+      availableInPk: false, pricePkrMin: 9000000, pricePkrMax: 11000000,
+      description: "Sporty compact EV on the MSP platform. Expected in Pakistan 2025.",
+      specs: { create: {
+        rangeWltp: 519, rangeRealWorld: 430, batteryCapKwh: 64,
+        batteryType: "NMC", batteryPackVolt: 400,
+        chargingAcKw: 11, chargingDcKw: 150, chargingTime080: "27 min",
+        motorPowerKw: 150, torqueNm: 250, driveType: "RWD",
+        topSpeed: 160, accel0100: 7.7, efficiencyWhKm: 143, weight: 1685,
+        platform: "MSP", coolingSystem: "liquid",
+      }},
+      battery: { create: {
+        chemistry: "NMC", capacityKwh: 64, voltage: 400,
+        cellFormat: "prismatic", thermalManagement: "liquid",
+        fastChargeCycles: 1500, degradationRate: 2.0, warrantyYears: 7, cycleLife: 2000,
+      }},
+      charging: { create: [
+        { connectorType: "CCS2", maxDcKw: 150, maxAcKw: 11, chargingStandard: "CCS" },
+      ]},
+    },
+  });
+
+  // ─── 12. Kia EV6 ───────────────────────────────────────────────────────
+  await prisma.evModel.upsert({
+    where: { slug: "kia-ev6" },
+    update: {},
+    create: {
+      brand: "Kia", model: "EV6", variant: "GT-Line",
+      slug: "kia-ev6", year: 2024, powertrain: "BEV",
+      bodyType: "SUV", segment: "D", country: "South Korea",
+      availableInPk: false, pricePkrMin: 16000000, pricePkrMax: 20000000,
+      description: "Premium sporty crossover on 800V E-GMP platform. Ultra-fast charging.",
+      specs: { create: {
+        rangeWltp: 528, rangeRealWorld: 450, batteryCapKwh: 77.4,
+        batteryType: "NMC", batteryPackVolt: 800,
+        chargingAcKw: 11, chargingDcKw: 233, chargingTime080: "18 min",
+        motorPowerKw: 168, torqueNm: 350, driveType: "RWD",
+        topSpeed: 185, accel0100: 7.3, efficiencyWhKm: 161, weight: 1960,
+        platform: "E-GMP", coolingSystem: "liquid",
+      }},
+      battery: { create: {
+        chemistry: "NMC", capacityKwh: 77.4, voltage: 800,
+        cellFormat: "pouch", thermalManagement: "liquid",
+        fastChargeCycles: 1500, degradationRate: 2.0, warrantyYears: 7, cycleLife: 2000,
+      }},
+      charging: { create: [
+        { connectorType: "CCS2", maxDcKw: 233, maxAcKw: 11, chargingStandard: "CCS" },
+      ]},
+    },
+  });
+
+  // ─── 13. Chery Omoda E5 ────────────────────────────────────────────────
+  await prisma.evModel.upsert({
+    where: { slug: "chery-omoda-e5" },
+    update: {},
+    create: {
+      brand: "Chery", model: "Omoda E5", variant: "Premium",
+      slug: "chery-omoda-e5", year: 2024, powertrain: "BEV",
+      bodyType: "SUV", segment: "C", country: "China",
+      availableInPk: true, pricePkrMin: 8000000, pricePkrMax: 9500000,
+      description: "Stylish compact SUV with ADAS. Growing presence in Pakistan via Chery dealers.",
+      specs: { create: {
+        rangeWltp: 430, rangeRealWorld: 390, batteryCapKwh: 61.1,
+        batteryType: "NMC", batteryPackVolt: 400,
+        chargingAcKw: 7, chargingDcKw: 80, chargingTime080: "35 min",
+        motorPowerKw: 150, torqueNm: 340, driveType: "FWD",
+        topSpeed: 172, accel0100: 7.6, efficiencyWhKm: 158, weight: 1750,
+        coolingSystem: "liquid",
+      }},
+      battery: { create: {
+        chemistry: "NMC", capacityKwh: 61.1, voltage: 400,
+        cellFormat: "prismatic", thermalManagement: "liquid",
+        fastChargeCycles: 1500, warrantyYears: 8, cycleLife: 2000,
+      }},
+      charging: { create: [
+        { connectorType: "CCS2", maxDcKw: 80, maxAcKw: 7, chargingStandard: "CCS" },
+      ]},
+    },
+  });
+
+  // ─── 14. Toyota bZ4X ───────────────────────────────────────────────────
+  await prisma.evModel.upsert({
+    where: { slug: "toyota-bz4x" },
+    update: {},
+    create: {
+      brand: "Toyota", model: "bZ4X", variant: "AWD",
+      slug: "toyota-bz4x", year: 2024, powertrain: "BEV",
+      bodyType: "SUV", segment: "D", country: "Japan",
+      availableInPk: false, pricePkrMin: 13000000, pricePkrMax: 15000000,
+      description: "Toyota's first dedicated BEV SUV. Reliable Japanese EV with e-TNGA platform.",
+      specs: { create: {
+        rangeWltp: 466, rangeRealWorld: 400, batteryCapKwh: 71.4,
+        batteryType: "NMC", batteryPackVolt: 400,
+        chargingAcKw: 11, chargingDcKw: 150, chargingTime080: "30 min",
+        motorPowerKw: 160, torqueNm: 337, driveType: "AWD",
+        topSpeed: 160, accel0100: 7.7, efficiencyWhKm: 175, weight: 2085,
+        platform: "e-TNGA", coolingSystem: "liquid",
+      }},
+      battery: { create: {
+        chemistry: "NMC", capacityKwh: 71.4, voltage: 400,
+        cellFormat: "prismatic", thermalManagement: "liquid",
+        fastChargeCycles: 1500, warrantyYears: 10, cycleLife: 2000,
+      }},
+      charging: { create: [
+        { connectorType: "CCS2", maxDcKw: 150, maxAcKw: 11, chargingStandard: "CCS" },
+      ]},
+    },
+  });
+
+  // ─── 15. BYD Atto 5 ───────────────────────────────────────────────────
+  await prisma.evModel.upsert({
+    where: { slug: "byd-atto-5" },
+    update: {},
+    create: {
+      brand: "BYD", model: "Atto 5", variant: "Standard",
+      slug: "byd-atto-5", year: 2025, powertrain: "BEV",
+      bodyType: "SUV", segment: "D", country: "China",
+      availableInPk: false, pricePkrMin: 10500000, pricePkrMax: 12000000,
+      description: "BYD's latest mid-size SUV on e-Platform 3.0. Expected in Pakistan 2025.",
+      specs: { create: {
+        rangeWltp: 500, rangeRealWorld: 450, batteryCapKwh: 76.8,
+        batteryType: "LFP Blade", batteryPackVolt: 400,
+        chargingAcKw: 11, chargingDcKw: 150, chargingTime080: "27 min",
+        motorPowerKw: 160, torqueNm: 310, driveType: "FWD",
+        topSpeed: 175, accel0100: 7.5, efficiencyWhKm: 168, weight: 1900,
+        platform: "e-Platform 3.0", coolingSystem: "liquid",
+      }},
+      battery: { create: {
+        chemistry: "LFP Blade", capacityKwh: 76.8, voltage: 400,
+        cellFormat: "prismatic", thermalManagement: "liquid",
+        fastChargeCycles: 3000, warrantyYears: 8, cycleLife: 5000,
+      }},
+      charging: { create: [
+        { connectorType: "CCS2", maxDcKw: 150, maxAcKw: 11, chargingStandard: "CCS" },
+      ]},
+    },
+  });
+
+  // ─── 16. Proton e.50 ───────────────────────────────────────────────────
+  await prisma.evModel.upsert({
+    where: { slug: "proton-e50" },
+    update: {},
+    create: {
+      brand: "Proton", model: "e.50", variant: "Standard",
+      slug: "proton-e50", year: 2024, powertrain: "BEV",
+      bodyType: "Sedan", segment: "C", country: "Malaysia",
+      availableInPk: false, pricePkrMin: 7500000, pricePkrMax: 9000000,
+      description: "Malaysian EV sedan based on Geely platform. Potential import to Pakistan.",
+      specs: { create: {
+        rangeWltp: 440, rangeRealWorld: 390, batteryCapKwh: 49,
+        batteryType: "NMC", batteryPackVolt: 400,
+        chargingAcKw: 11, chargingDcKw: 80, chargingTime080: "30 min",
+        motorPowerKw: 150, torqueNm: 230, driveType: "FWD",
+        topSpeed: 170, accel0100: 7.9, efficiencyWhKm: 138, weight: 1650,
+        coolingSystem: "liquid",
+      }},
+      battery: { create: {
+        chemistry: "NMC", capacityKwh: 49, voltage: 400,
+        cellFormat: "prismatic", thermalManagement: "liquid",
+        warrantyYears: 8, cycleLife: 2000,
+      }},
+      charging: { create: [
+        { connectorType: "CCS2", maxDcKw: 80, maxAcKw: 11, chargingStandard: "CCS" },
+      ]},
+    },
+  });
+
+  // ─── 17. Volvo EX30 ───────────────────────────────────────────────────
+  await prisma.evModel.upsert({
+    where: { slug: "volvo-ex30" },
+    update: {},
+    create: {
+      brand: "Volvo", model: "EX30", variant: "Single Motor",
+      slug: "volvo-ex30", year: 2024, powertrain: "BEV",
+      bodyType: "SUV", segment: "B", country: "China",
+      availableInPk: false, pricePkrMin: 12000000, pricePkrMax: 14000000,
+      description: "Volvo's smallest and most affordable EV. Premium compact SUV.",
+      specs: { create: {
+        rangeWltp: 480, rangeRealWorld: 410, batteryCapKwh: 69,
+        batteryType: "NMC", batteryPackVolt: 400,
+        chargingAcKw: 11, chargingDcKw: 153, chargingTime080: "26 min",
+        motorPowerKw: 200, torqueNm: 343, driveType: "RWD",
+        topSpeed: 180, accel0100: 5.7, efficiencyWhKm: 158, weight: 1793,
+        coolingSystem: "liquid",
+      }},
+      battery: { create: {
+        chemistry: "NMC", capacityKwh: 69, voltage: 400,
+        cellFormat: "prismatic", thermalManagement: "liquid",
+        fastChargeCycles: 1500, warrantyYears: 8, cycleLife: 2000,
+      }},
+      charging: { create: [
+        { connectorType: "CCS2", maxDcKw: 153, maxAcKw: 11, chargingStandard: "CCS" },
+      ]},
+    },
+  });
+
+  console.log("  17 EV models seeded");
 
   // ─── Sample Listings ────────────────────────────────────────────────────
   await prisma.listing.createMany({
