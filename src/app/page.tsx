@@ -24,7 +24,44 @@ function getSpecs(ev: EvModel) {
   return (ev.specs ?? {}) as Record<string, number | null>;
 }
 
-/* ── Gradient insight card (coloured background, white text) ── */
+/* ── EV car silhouette SVG (inline, scales to any size) ── */
+function EvSilhouette({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 220 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+      {/* Body shell */}
+      <path
+        d="M 12 62 L 12 50 L 35 50 L 65 24 L 148 22 L 172 40 L 206 44 L 210 62 Z"
+        fill="rgba(255,255,255,0.18)"
+        stroke="rgba(255,255,255,0.30)"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+      {/* Windshield + side window */}
+      <path
+        d="M 68 48 L 82 28 L 128 25 L 145 44 Z"
+        fill="rgba(255,255,255,0.22)"
+        stroke="rgba(255,255,255,0.25)"
+        strokeWidth="1"
+      />
+      {/* Door line */}
+      <line x1="108" y1="25" x2="112" y2="60" stroke="rgba(255,255,255,0.20)" strokeWidth="1" />
+      {/* Rear light strip */}
+      <rect x="204" y="44" width="5" height="14" rx="2" fill="rgba(255,255,255,0.50)" />
+      {/* Front headlight */}
+      <rect x="12" y="50" width="6" height="8" rx="1.5" fill="rgba(255,255,255,0.45)" />
+      {/* Front wheel */}
+      <circle cx="62"  cy="66" r="16" fill="rgba(0,0,0,0.25)" stroke="rgba(255,255,255,0.35)" strokeWidth="1.5" />
+      <circle cx="62"  cy="66" r="8"  fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.25)" strokeWidth="1" />
+      {/* Rear wheel */}
+      <circle cx="162" cy="66" r="16" fill="rgba(0,0,0,0.25)" stroke="rgba(255,255,255,0.35)" strokeWidth="1.5" />
+      <circle cx="162" cy="66" r="8"  fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.25)" strokeWidth="1" />
+      {/* Ground reflection */}
+      <ellipse cx="112" cy="83" rx="95" ry="5" fill="rgba(0,0,0,0.12)" />
+    </svg>
+  );
+}
+
+/* ── Gradient insight card with EV silhouette ── */
 function InsightCard({
   emoji, rank, label, model, value, unit, href, gradient, shadow,
 }: {
@@ -35,35 +72,38 @@ function InsightCard({
   return (
     <Link href={href} className="group block">
       <div
-        className="rounded-2xl p-6 relative overflow-hidden transition-all duration-250"
-        style={{
-          background: gradient,
-          boxShadow: shadow,
-        }}
+        className="rounded-2xl p-6 relative overflow-hidden transition-all duration-300 hover:-translate-y-1"
+        style={{ background: gradient, boxShadow: shadow, minHeight: "200px" }}
       >
-        {/* Sheen sweep on hover */}
-        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+        {/* Photo-quality background texture */}
+        <div
+          className="absolute inset-0 opacity-20 pointer-events-none"
           style={{
-            background: "linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.18) 50%, transparent 70%)",
-            animation: "none",
+            backgroundImage: "radial-gradient(ellipse at 80% 20%, rgba(255,255,255,0.6) 0%, transparent 60%), radial-gradient(ellipse at 20% 80%, rgba(0,0,0,0.4) 0%, transparent 60%)",
           }}
         />
-        {/* Inner light orb */}
-        <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full opacity-20"
-          style={{ background: "rgba(255,255,255,0.4)", filter: "blur(24px)" }} />
+        {/* Sheen sweep on hover */}
+        <div
+          className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+          style={{ background: "linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.15) 50%, transparent 70%)" }}
+        />
+        {/* EV car silhouette — positioned bottom-right, decorative */}
+        <div className="absolute bottom-0 right-0 w-full opacity-30 pointer-events-none translate-y-1">
+          <EvSilhouette className="w-full h-auto" />
+        </div>
 
         <div className="relative z-10">
           <div className="flex items-start justify-between mb-4">
-            <span className="text-2xl">{emoji}</span>
-            <span className="text-[10px] font-bold bg-white/20 text-white px-2 py-0.5 rounded-full uppercase tracking-wider">
+            <span className="text-2xl drop-shadow">{emoji}</span>
+            <span className="text-[10px] font-bold bg-white/25 backdrop-blur-sm text-white px-2.5 py-1 rounded-full uppercase tracking-wider border border-white/20">
               {rank}
             </span>
           </div>
-          <div className="text-white/70 text-xs uppercase tracking-wider mb-1 font-medium">{label}</div>
-          <div className="text-white font-bold text-base mb-1 group-hover:underline decoration-white/40">{model}</div>
-          <div className="text-white font-black text-4xl tabular-nums">
+          <div className="text-white/70 text-xs uppercase tracking-wider mb-1 font-semibold">{label}</div>
+          <div className="text-white font-bold text-base mb-3 group-hover:underline decoration-white/40 leading-snug">{model}</div>
+          <div className="text-white font-black text-5xl tabular-nums leading-none">
             {value}
-            <span className="text-xl font-medium text-white/70 ml-1">{unit}</span>
+            <span className="text-xl font-medium text-white/70 ml-2">{unit}</span>
           </div>
         </div>
       </div>
@@ -136,10 +176,11 @@ function WhyCard({ icon, title, desc, gradient }: {
 }
 
 export default async function HomePage() {
-  // Fetch ALL EVs (not filtered by availableInPk) so hero stats are never "0"
+  // Include specs relation so rangeRealWorld / batteryCapKwh / chargingDcKw are available
   const allEvs = (await prisma.evModel.findMany({
     orderBy: { brand: "asc" },
-  })) as EvModel[];
+    include: { specs: true },  // ← critical: without this, ev.specs is always undefined
+  })) as unknown as EvModel[];
 
   const stations = ((await prisma.chargingStation.findMany({})) as unknown) as ChargingStation[];
 
@@ -228,7 +269,7 @@ export default async function HomePage() {
               Pakistan&apos;s first EV intelligence platform with built-in tools to plan, compare, and optimize your EV journey.
             </p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             <ToolCard href="/trip-planner" icon="🗺️" title="EV Trip Planner" badge="New"
               desc="Enter origin & destination — we show exactly where to charge on any Pakistan route."
               cta="Plan a trip" accentColor="rgba(99,102,241,1)" />
@@ -238,6 +279,15 @@ export default async function HomePage() {
             <ToolCard href="/compare" icon="⚖️" title="EV Comparison"
               desc="Side-by-side: range, battery, DC charging, motor power, 0-100 time and ownership cost."
               cta="Compare" accentColor="rgba(59,130,246,1)" />
+            <ToolCard href="/emi-calculator" icon="🏦" title="EMI Calculator" badge="New"
+              desc="Compare HBL, MCB, Meezan Ijarah financing. Monthly payments, total cost, and EV fuel savings."
+              cta="Calculate EMI" accentColor="rgba(245,158,11,1)" />
+            <ToolCard href="/home-charging" icon="🔌" title="Home Charging Guide" badge="New"
+              desc="Wallbox selection, load shedding survival, solar + EV tips, and WAPDA wiring costs."
+              cta="Read guide" accentColor="rgba(59,130,246,1)" />
+            <ToolCard href="/charging-map" icon="📍" title="Live Charging Map"
+              desc="20+ stations with real-time status, connector types, and pricing per kWh across Pakistan."
+              cta="Open map" accentColor="rgba(34,197,94,1)" />
           </div>
         </div>
       </section>

@@ -33,9 +33,11 @@ const GROUPS: NavGroup[] = [
     id: "tools",
     label: "Tools",
     items: [
-      { href: "/trip-planner",    icon: "🗺️", label: "Trip Planner",    desc: "Plan routes with charging stops", color: "#6366F1" },
-      { href: "/charging-map",    icon: "🔌",  label: "Charging Map",    desc: "16+ live stations across Pakistan", color: "#22C55E" },
-      { href: "/cost-calculator", icon: "💰",  label: "Cost Calculator", desc: "EV vs petrol savings", color: "#10B981" },
+      { href: "/trip-planner",    icon: "🗺️", label: "Trip Planner",       desc: "Plan routes with charging stops", color: "#6366F1" },
+      { href: "/charging-map",    icon: "🔌",  label: "Charging Map",       desc: "16+ live stations across Pakistan", color: "#22C55E" },
+      { href: "/cost-calculator", icon: "💰",  label: "Cost Calculator",    desc: "EV vs petrol savings", color: "#10B981" },
+      { href: "/emi-calculator",  icon: "🏦",  label: "EMI Calculator",     desc: "HBL, MCB, Meezan financing", badge: "New", color: "#F59E0B" },
+      { href: "/home-charging",   icon: "🔌",  label: "Home Charging Guide",desc: "Wallbox, solar & load shedding tips", badge: "New", color: "#3B82F6" },
     ],
   },
   {
