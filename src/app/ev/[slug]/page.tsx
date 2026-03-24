@@ -122,7 +122,7 @@ export default async function EvDetailPage({ params }: Props) {
 
               {/* At-a-glance row */}
               {ev.specs && (
-                <div className="grid grid-cols-4 sm:grid-cols-7 gap-3 mt-8 pt-6"
+                <div className="grid grid-cols-4 sm:grid-cols-7 gap-2 sm:gap-3 mt-8 pt-6"
                   style={{ borderTop: "1px solid rgba(255,255,255,0.25)" }}>
                   {[
                     { icon: "📍", label: "Range WLTP",  value: ev.specs.rangeWltp   ? `${ev.specs.rangeWltp} km`   : "—" },
@@ -192,7 +192,8 @@ export default async function EvDetailPage({ params }: Props) {
                   <div className="px-5 py-4" style={{ borderBottom: "1px solid #E6E9F2" }}>
                     <h2 className="font-bold text-slate-900">Charging Compatibility</h2>
                   </div>
-                  <table className="w-full text-sm">
+                  <div className="overflow-x-auto">
+                  <table className="w-full text-sm" style={{ minWidth: "340px" }}>
                     <thead>
                       <tr style={{ background: "#F6F8FF", borderBottom: "1px solid #E6E9F2" }}>
                         {["Connector", "Max DC", "Max AC", "Standard"].map((h, i) => (
@@ -211,6 +212,7 @@ export default async function EvDetailPage({ params }: Props) {
                       ))}
                     </tbody>
                   </table>
+                  </div>
                 </section>
               )}
 

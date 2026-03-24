@@ -800,6 +800,10 @@ button { transition: all 0.18s cubic-bezier(.2,.8,.2,1); }
   border-color: rgba(99,102,241,0.40) !important;
 }
 
+/* Scrollbar hide utility */
+.scrollbar-hide { scrollbar-width: none; -ms-overflow-style: none; }
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+
 /* Mobile */
 @media (max-width: 768px) {
   .gradient-mesh { background-attachment: scroll; }

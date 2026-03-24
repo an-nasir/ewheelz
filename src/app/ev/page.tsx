@@ -99,7 +99,7 @@ export default async function EvDatabasePage({ searchParams }: { searchParams: S
               ))}
 
               {/* Sort controls */}
-              <div className="ml-auto flex gap-2">
+              <div className="flex gap-2 mt-1 sm:mt-0 sm:ml-auto">
                 {[["brand", "A–Z"], ["price", "Price ↑"], ["year", "Newest"]].map(([key, label]) => (
                   <Link
                     key={key}
@@ -180,7 +180,7 @@ export default async function EvDatabasePage({ searchParams }: { searchParams: S
                 </div>
 
                 {/* Specs */}
-                <div className="grid grid-cols-4 gap-4 sm:gap-6 shrink-0">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-6 shrink-0 w-full sm:w-auto">
                   <SpecPill label="Range" value={ev.specs?.rangeRealWorld ? `${ev.specs.rangeRealWorld}` : "—"} unit="km" color="#16A34A" />
                   <SpecPill label="Battery" value={ev.specs?.batteryCapKwh ? `${ev.specs.batteryCapKwh}` : "—"} unit="kWh" color="#4F46E5" />
                   <SpecPill label="DC Charge" value={ev.specs?.chargingDcKw ? `${ev.specs.chargingDcKw}` : "—"} unit="kW" color="#2563EB" />
@@ -188,7 +188,7 @@ export default async function EvDatabasePage({ searchParams }: { searchParams: S
                 </div>
 
                 {/* Price */}
-                <div className="text-right shrink-0 min-w-[110px]">
+                <div className="text-left sm:text-right shrink-0 sm:min-w-[110px]">
                   {ev.pricePkrMin ? (
                     <>
                       <div className="font-black text-base"

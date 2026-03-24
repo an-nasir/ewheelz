@@ -205,6 +205,82 @@ model ChargingStation {
   @@map("charging_stations")
 }
 
+// ─── Community (anonymous, session-token based) ───────────────────────────────
+
+model CommunitySession {
+  id               String   @id @default(cuid())
+  sessionToken     String   @map("session_token")
+  vehicleModel     String   @map("vehicle_model")
+  stationName      String?  @map("station_name")
+  startBatteryPct  Float?   @map("start_battery_pct")
+  endBatteryPct    Float?   @map("end_battery_pct")
+  kwhAdded         Float?   @map("kwh_added")
+  costPkr          Float?   @map("cost_pkr")
+  chargingTimeMin  Int?     @map("charging_time_min")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  @@index([sessionToken])
+  @@map("community_sessions")
+}
+
+model StationReport {
+  id          String   @id @default(cuid())
+  stationId   String   @map("station_id")
+  stationName String?  @map("station_name")
+  status      String
+  queueLength Int      @default(0) @map("queue_length")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([stationId])
+  @@index([createdAt])
+  @@map("station_reports")
+}
+
+model TripLog {
+  id             String   @id @default(cuid())
+  sessionToken   String   @map("session_token")
+  vehicleModel   String   @map("vehicle_model")
+  distanceKm     Float    @map("distance_km")
+  batteryUsedPct Float?   @map("battery_used_pct")
+  avgSpeedKmh    Float?   @map("avg_speed_kmh")
+  temperatureC   Float?   @map("temperature_c")
+  acOn           Boolean  @default(false) @map("ac_on")
+  kwhUsed        Float?   @map("kwh_used")
+  efficiencyWhKm Float?   @map("efficiency_wh_km")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@index([sessionToken])
+  @@map("trip_logs")
+}
+
+model EfficiencyReport {
+  id             String   @id @default(cuid())
+  sessionToken   String   @map("session_token")
+  vehicleModel   String   @map("vehicle_model")
+  efficiencyWhKm Float    @map("efficiency_wh_km")
+  distanceKm     Float?   @map("distance_km")
+  temperatureC   Float?   @map("temperature_c")
+  routeType      String   @default("mixed") @map("route_type")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@index([vehicleModel])
+  @@index([sessionToken])
+  @@map("efficiency_reports")
+}
+
+model RangeFeedback {
+  id               String   @id @default(cuid())
+  evSlug           String   @map("ev_slug")
+  predictedRangeKm Float?   @map("predicted_range_km")
+  actualRangeKm    Float?   @map("actual_range_km")
+  feedback         String
+  conditions       String?
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  @@index([evSlug])
+  @@map("range_feedback")
+}
+
 // ─── Articles / News ──────────────────────────────────────────────────────────
 
 model Article {
