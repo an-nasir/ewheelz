@@ -1,0 +1,226 @@
+// eWheelz — Pakistan EV Intelligence Platform
+// Local dev: SQLite (node:sqlite via custom shim, no prisma generate needed)
+// Production: switch to provider = "postgresql" + Neon DATABASE_URL
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Users ────────────────────────────────────────────────────────────────────
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  phone     String?
+  city      String?
+  role      String   @default("USER")   // USER | DEALER | ADMIN
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  listings Listing[]
+  reviews  Review[]
+
+  @@map("users")
+}
+
+// ─── EV Models ────────────────────────────────────────────────────────────────
+
+model EvModel {
+  id             String    @id @default(cuid())
+  brand          String
+  model          String
+  variant        String?
+  slug           String    @unique
+  year           Int
+  powertrain     String    @default("BEV")           // BEV | PHEV | REEV | HEV
+  bodyType       String?   @map("body_type")
+  segment        String?
+  country        String?
+  launchDate     DateTime? @map("launch_date")
+  discontinued   Boolean   @default(false)
+  availableInPk  Boolean   @default(false) @map("available_in_pk")
+  pricePkrMin    Int?      @map("price_pkr_min")
+  pricePkrMax    Int?      @map("price_pkr_max")
+  imageUrl       String?   @map("image_url")
+  description    String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  specs    EvSpec?
+  battery  EvBattery?
+  charging EvCharging[]
+  listings Listing[]
+  reviews  Review[]
+
+  @@unique([brand, model, variant, year])
+  @@index([brand])
+  @@index([year])
+  @@index([powertrain])
+  @@index([slug])
+  @@map("ev_models")
+}
+
+// ─── EV Specs (1:1) ───────────────────────────────────────────────────────────
+
+model EvSpec {
+  id               String  @id @default(cuid())
+  evModelId        String  @unique @map("ev_model_id")
+  rangeWltp        Int?    @map("range_wltp")
+  rangeRealWorld   Int?    @map("range_real_world")
+  batteryCapKwh    Float?  @map("battery_capacity_kwh")
+  batteryType      String? @map("battery_type")
+  batteryCells     String? @map("battery_cells")
+  batteryPackVolt  Float?  @map("battery_pack_voltage")
+  chargingAcKw     Float?  @map("charging_ac_kw")
+  chargingDcKw     Float?  @map("charging_dc_kw")
+  chargingTime080  String? @map("charging_time_0_80")
+  chargingTime1080 String? @map("charging_time_10_80")
+  motorPowerKw     Float?  @map("motor_power_kw")
+  torqueNm         Int?    @map("torque_nm")
+  driveType        String? @map("drive_type")
+  topSpeed         Int?    @map("top_speed")
+  accel0100        Float?  @map("acceleration_0_100")
+  efficiencyWhKm   Float?  @map("efficiency_wh_km")
+  weight           Int?
+  towingCapacity   Int?    @map("towing_capacity")
+  platform         String?
+  coolingSystem    String? @map("cooling_system")
+  combinedRange    Int?    @map("combined_range")
+
+  evModel EvModel @relation(fields: [evModelId], references: [id], onDelete: Cascade)
+
+  @@map("ev_specs")
+}
+
+// ─── EV Batteries ─────────────────────────────────────────────────────────────
+
+model EvBattery {
+  id                String  @id @default(cuid())
+  evModelId         String  @unique @map("ev_model_id")
+  chemistry         String?
+  capacityKwh       Float?  @map("capacity_kwh")
+  voltage           Float?
+  cellFormat        String? @map("cell_format")
+  thermalManagement String? @map("thermal_management")
+  fastChargeCycles  Int?    @map("fast_charge_cycles")
+  degradationRate   Float?  @map("degradation_rate")
+  warrantyYears     Int?    @map("warranty_years")
+  cycleLife         Int?    @map("cycle_life")
+
+  evModel EvModel @relation(fields: [evModelId], references: [id], onDelete: Cascade)
+
+  @@map("ev_batteries")
+}
+
+// ─── EV Charging Compatibility ────────────────────────────────────────────────
+
+model EvCharging {
+  id               String  @id @default(cuid())
+  evModelId        String  @map("ev_model_id")
+  connectorType    String  @map("connector_type")
+  maxDcKw          Float?  @map("max_dc_kw")
+  maxAcKw          Float?  @map("max_ac_kw")
+  chargingStandard String? @map("charging_standard")
+
+  evModel EvModel @relation(fields: [evModelId], references: [id], onDelete: Cascade)
+
+  @@map("ev_charging")
+}
+
+// ─── Listings ─────────────────────────────────────────────────────────────────
+
+model Listing {
+  id            String   @id @default(cuid())
+  userId        String   @map("user_id")
+  evModelId     String   @map("ev_model_id")
+  price         Int
+  year          Int
+  mileage       Int?
+  city          String
+  batteryHealth Float?   @map("battery_health")
+  condition     String   @default("USED")   // NEW | USED | CERTIFIED
+  description   String?
+  status        String   @default("ACTIVE") // ACTIVE | SOLD | EXPIRED
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  evModel EvModel @relation(fields: [evModelId], references: [id])
+
+  @@index([evModelId])
+  @@index([city])
+  @@index([price])
+  @@index([createdAt])
+  @@map("listings")
+}
+
+// ─── Reviews ──────────────────────────────────────────────────────────────────
+
+model Review {
+  id         String   @id @default(cuid())
+  evModelId  String   @map("ev_model_id")
+  authorId   String   @map("author_id")
+  rating     Int
+  pros       String?
+  cons       String?
+  reviewText String?  @map("review_text")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  evModel EvModel @relation(fields: [evModelId], references: [id])
+  author  User    @relation(fields: [authorId], references: [id])
+
+  @@index([evModelId])
+  @@map("reviews")
+}
+
+// ─── Charging Stations ────────────────────────────────────────────────────────
+
+model ChargingStation {
+  id               String   @id @default(cuid())
+  name             String
+  latitude         Float
+  longitude        Float
+  network          String?
+  connectorTypes   String?  @map("connector_types")
+  maxPowerKw       Float?   @map("max_power_kw")
+  city             String?
+  country          String?
+  pricePerKwh      Float?   @map("price_per_kwh")
+  operationalHours String?  @default("24/7") @map("operational_hours")
+  totalSpots       Int?     @default(2) @map("total_spots")
+  availableSpots   Int?     @default(2) @map("available_spots")
+  liveStatus       String?  @default("OPERATIONAL") @map("live_status")
+  address          String?
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  @@index([city])
+  @@index([network])
+  @@map("charging_stations")
+}
+
+// ─── Articles / News ──────────────────────────────────────────────────────────
+
+model Article {
+  id          String    @id @default(cuid())
+  title       String
+  slug        String    @unique
+  excerpt     String?
+  content     String
+  category    String    @default("NEWS") // NEWS | REVIEW | GUIDE | TUTORIAL | COMPARISON
+  imageUrl    String?   @map("image_url")
+  published   Boolean   @default(false)
+  publishedAt DateTime? @map("published_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@index([category])
+  @@index([publishedAt])
+  @@map("articles")
+}
