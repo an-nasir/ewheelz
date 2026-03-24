@@ -13,7 +13,7 @@
     "db:seed": "ts-node --project tsconfig.seed.json --transpile-only prisma/seed.ts",
     "db:studio": "prisma studio",
     "api": "next dev",
-    "postinstall": "prisma generate"
+    "postinstall": "node scripts/patch-nextjs.js && prisma generate"
   },
   "dependencies": {
     "@prisma/client": "^5.14.0",

@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 // GET /api/listings — Marketplace listings with filters
 // POST /api/listings — Create a new listing
 import { NextRequest, NextResponse } from "next/server";

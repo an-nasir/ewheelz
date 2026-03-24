@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 // src/app/api/cost-calculator/route.ts
 // POST /api/cost-calculator — EV vs petrol cost comparison
 

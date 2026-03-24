@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 // src/app/api/community/stats/route.ts
 // GET /api/community/stats — aggregate stats for EV Intelligence Dashboard
 

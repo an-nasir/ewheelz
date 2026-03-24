@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 // GET /api/compare?slugs=byd-atto-3,mg-zs-ev — Compare 2-4 EV models
 // Returns side-by-side specs, batteries, charging for comparison
 import { NextRequest, NextResponse } from "next/server";

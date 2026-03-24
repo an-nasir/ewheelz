@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 // GET /api/charging-stations — Charging station locator
 // Query params: city, network, connector
 // NOTE: connectorTypes stored as comma-separated string for SQLite compat

@@ -234,5 +234,6 @@ export default async function ChargingMapPage() {
         ))}
       </div>
     </div>
+  </div>
   );
 }

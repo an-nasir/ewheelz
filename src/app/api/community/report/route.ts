@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 // src/app/api/community/report/route.ts
 // POST /api/community/report — unified endpoint for all community report types
 

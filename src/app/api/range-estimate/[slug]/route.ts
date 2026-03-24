@@ -1,6 +1,5 @@
-// src/app/api/range-estimate/[slug]/route.ts
+export const dynamic = "force-dynamic";
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
 import { estimateRange } from '@/lib/rangeEstimator';
 
 export async function GET(
@@ -8,6 +7,8 @@ export async function GET(
   { params }: { params: { slug: string } }
 ) {
   try {
+    const { prisma } = await import("@/lib/prisma");
+
     const ev = await prisma.evModel.findUnique({
       where: { slug: params.slug },
       include: { specs: true, battery: true },
@@ -17,9 +18,11 @@ export async function GET(
       return NextResponse.json({ error: 'EV not found' }, { status: 404 });
     }
 
-    const batteryCapacityKwh = ev.battery?.capacityKwh ?? ev.specs?.batteryCapKwh ?? 60;
-    const wltpRange          = ev.specs?.rangeWltp ?? ev.specs?.rangeRealWorld ?? 350;
-    const efficiencyWhKm     = ev.specs?.efficiencyWhKm ?? undefined;
+    const s = ev.specs as Record<string, unknown>;
+    const b = ev.battery as Record<string, unknown>;
+    const batteryCapacityKwh = (b?.capacityKwh ?? s?.batteryCapKwh ?? 60) as number;
+    const wltpRange          = (s?.rangeWltp ?? s?.rangeRealWorld ?? 350) as number;
+    const efficiencyWhKm     = s?.efficiencyWhKm as number | undefined;
 
     const estimate = estimateRange({ batteryCapacityKwh, wltpRange, efficiencyWhKm });
 

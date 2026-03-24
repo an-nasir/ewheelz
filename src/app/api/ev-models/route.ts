@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 // GET /api/ev-models — List all EV models with filters
 // Query params: brand, powertrain, segment, available_in_pk, sort
 import { NextRequest, NextResponse } from "next/server";

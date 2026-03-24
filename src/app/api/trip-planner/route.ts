@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 // src/app/api/trip-planner/route.ts
 // POST /api/trip-planner — EV trip planning with charging stops
 

@@ -7,3 +7,4 @@ prisma/dev.db-journal
 *.log
 .DS_Store
 mobile/node_modules/
+push-to-github.js

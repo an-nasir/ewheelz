@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 // src/app/api/community/leaderboard/route.ts
 // GET /api/community/leaderboard — efficiency leaderboard
 

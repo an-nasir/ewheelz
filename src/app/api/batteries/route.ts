@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 // GET /api/batteries — Battery database with chemistry comparison
 // Query params: chemistry (LFP, NMC, etc.)
 import { NextRequest, NextResponse } from "next/server";
