@@ -3,6 +3,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ChargingStation } from "@/types";
+import { cacheStations, getCachedStations } from "@/lib/utils/offline";
 
 // Augment window for Leaflet CDN load
 declare global {
@@ -36,6 +37,24 @@ export default function LeafletMap({ stations, height = "500px", tripRoute }: Pr
   const markersLayerRef = useRef<any>(null);
   const [mapReady, setMapReady] = useState(false);
   const [error, setError] = useState("");
+  const [localStations, setLocalStations] = useState<ChargingStation[]>(stations);
+  const [isOfflineMode, setIsOfflineMode] = useState(false);
+
+  // ── Effect 0: Sync local stations with props or cache ──────────────
+  useEffect(() => {
+    if (stations && stations.length > 0) {
+      setLocalStations(stations);
+      setIsOfflineMode(false);
+    } else {
+      // Try to load from cache if no stations provided
+      getCachedStations().then((cached) => {
+        if (cached && cached.length > 0) {
+          setLocalStations(cached);
+          setIsOfflineMode(true);
+        }
+      });
+    }
+  }, [stations]);
 
   // ── Effect 1: initialise map & load Leaflet (runs once on mount) ──────────
   useEffect(() => {
@@ -119,26 +138,36 @@ export default function LeafletMap({ stations, height = "500px", tripRoute }: Pr
         iconAnchor: [size / 2, size / 2],
       });
 
-    for (const s of stations) {
-      const color = STATUS_COLOR[s.liveStatus] ?? "#16a34a";
+    for (const s of localStations) {
+      const isOnline = s.isOnline !== false; // handle undefined as online
+      const color = isOnline ? (STATUS_COLOR[s.liveStatus] ?? "#16a34a") : "#ef4444";
       const connectors = Array.isArray(s.connectorTypes)
         ? s.connectorTypes
         : s.connectorTypes?.split(",").map((c: string) => c.trim()) ?? [];
 
+      const lastUpdatedStr = new Date(s.lastUpdated).toLocaleString();
+
       const popup = L.popup({ maxWidth: 240 }).setContent(`
         <div style="font-family:system-ui;font-size:13px;line-height:1.5">
-          <strong style="font-size:14px">${s.name}</strong><br/>
+          <div style="display:flex;justify-content:space-between;align-items:start">
+             <strong style="font-size:14px">${s.name}</strong>
+             <span style="font-size:10px;padding:1px 5px;border-radius:4px;background:${isOnline ? "#dcfce7" : "#fee2e2"};color:${isOnline ? "#166534" : "#991b1b"};font-weight:700">
+               ${isOnline ? "ONLINE" : "OFFLINE"}
+             </span>
+          </div>
           <span style="color:#555">${s.network} · ${s.city}</span><br/>
           <span style="color:#16a34a;font-weight:600">⚡ ${s.maxPowerKw} kW</span>
           ${s.pricePerKwh ? ` · <span style="color:#0284c7">PKR ${s.pricePerKwh}/kWh</span>` : ""}
           <br/>
           <span style="font-size:11px;color:#777">${connectors.join(" · ")}</span><br/>
           <span style="font-size:11px;color:#777">🕐 ${s.operationalHours}</span><br/>
-          <span style="font-size:11px">
-            ${s.availableSpots}/${s.totalSpots} spots •
-            <span style="color:${color};font-weight:600">${s.liveStatus}</span>
-          </span>
-          ${s.address ? `<br/><span style="font-size:11px;color:#555">📍 ${s.address}</span>` : ""}
+          <div style="font-size:11px;color:#777;margin-top:2px;border-top:1px solid #eee;padding-top:2px">
+            Updated: ${lastUpdatedStr}
+          </div>
+          <div style="margin-top:8px;display:flex;gap:4px">
+             <button onclick="window.location.href='/charging-map?report=${s.id}'" style="flex:1;background:#f8fafc;border:1px solid #e2e8f0;padding:4px;border-radius:4px;font-size:10px;font-weight:600;cursor:pointer">Report Issue</button>
+             <button onclick="window.location.href='https://www.google.com/maps/dir/?api=1&destination=${s.latitude},${s.longitude}'" style="flex:1;background:#4f46e5;color:white;border:none;padding:4px;border-radius:4px;font-size:10px;font-weight:600;cursor:pointer">Navigate</button>
+          </div>
         </div>
       `);
 
@@ -146,7 +175,11 @@ export default function LeafletMap({ stations, height = "500px", tripRoute }: Pr
         .bindPopup(popup)
         .addTo(markersLayer);
     }
-  }, [stations, mapReady]); // re-run whenever stations array or map readiness changes
+
+    if (localStations.length > 0 && !isOfflineMode) {
+      cacheStations(localStations);
+    }
+  }, [localStations, mapReady, isOfflineMode]); // re-run whenever stations array or map readiness changes
 
   // ── Effect 3: draw trip route overlay ─────────────────────────────────────
   useEffect(() => {
@@ -191,6 +224,11 @@ export default function LeafletMap({ stations, height = "500px", tripRoute }: Pr
   return (
     <div className="relative rounded-xl overflow-hidden" style={{ height, border: "1px solid #E6E9F2" }}>
       <div ref={mapRef} style={{ width: "100%", height: "100%" }} />
+      {isOfflineMode && (
+        <div className="absolute top-4 left-4 z-[1000] px-3 py-1 bg-amber-100 text-amber-800 text-[10px] font-bold rounded-lg border border-amber-200 shadow-lg">
+          ⚠️ OFFLINE MODE / CACHED DATA
+        </div>
+      )}
       {!mapReady && !error && (
         <div className="absolute inset-0 flex items-center justify-center" style={{ background: "#F6F8FF" }}>
           <div className="text-center">

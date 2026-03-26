@@ -94,6 +94,8 @@ export interface ChargingStation {
   availableSpots: number;
   liveStatus: "OPERATIONAL" | "BUSY" | "OFFLINE";
   address: string | null;
+  isOnline: boolean;
+  lastUpdated: string | Date;
 }
 
 export interface TripPlanRequest {

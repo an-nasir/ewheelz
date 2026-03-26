@@ -13,13 +13,26 @@
     "db:seed": "ts-node --project tsconfig.seed.json --transpile-only prisma/seed.ts",
     "db:studio": "prisma studio",
     "api": "next dev",
-    "postinstall": "node scripts/patch-nextjs.js && prisma generate"
+    "postinstall": "node scripts/patch-nextjs.js && prisma generate",
+    "poll-stations": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/poll_stations.ts"
   },
   "dependencies": {
+    "@auth/prisma-adapter": "^2.11.1",
+    "@next/third-parties": "^16.2.1",
     "@prisma/client": "^5.14.0",
+    "@stripe/stripe-js": "^8.11.0",
+    "@types/bcryptjs": "^2.4.6",
+    "axios": "^1.13.6",
+    "bcryptjs": "^3.0.3",
+    "idb": "^8.0.3",
+    "mixpanel-browser": "^2.77.0",
     "next": "^14.2.0",
+    "next-auth": "^4.24.13",
+    "next-intl": "^4.8.3",
     "react": "^18.3.0",
-    "react-dom": "^18.3.0"
+    "react-dom": "^18.3.0",
+    "resend": "^6.9.4",
+    "stripe": "^20.4.1"
   },
   "devDependencies": {
     "@types/node": "^20.12.0",

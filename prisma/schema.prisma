@@ -7,26 +7,74 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 // ─── Users ────────────────────────────────────────────────────────────────────
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String
-  phone     String?
-  city      String?
-  role      String   @default("USER")   // USER | DEALER | ADMIN
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  listings Listing[]
-  reviews  Review[]
+  id            String    @id @default(uuid())
+  email         String    @unique
+  name          String?
+  image         String?
+  phone         String?
+  city          String?
+  role          String    @default("USER")   // USER | DEALER | ADMIN
+  password      String?                      // For Credentials provider
+  emailVerified    DateTime? @map("email_verified")
+  isPremium        Boolean   @default(false) @map("is_premium")
+  stripeCustomerId String?   @unique @map("stripe_customer_id")
+  subscriptionId   String?   @unique @map("subscription_id")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+  accounts         Account[]
+  sessions         Session[]
+  listings      Listing[]
+  reviews       Review[]
+  savedEVs      EvModel[]         @relation("UserSavedEVs")
+  savedStations ChargingStation[] @relation("UserSavedStations")
 
   @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
 }
 
 // ─── EV Models ────────────────────────────────────────────────────────────────
@@ -58,6 +106,8 @@ model EvModel {
   charging EvCharging[]
   listings Listing[]
   reviews  Review[]
+  savedBy  User[]      @relation("UserSavedEVs")
+  affiliateLinks AffiliateLink[] @relation("EvModelAffiliates")
 
   @@unique([brand, model, variant, year])
   @@index([brand])
@@ -137,26 +187,33 @@ model EvCharging {
 // ─── Listings ─────────────────────────────────────────────────────────────────
 
 model Listing {
-  id            String   @id @default(cuid())
-  userId        String   @map("user_id")
-  evModelId     String   @map("ev_model_id")
-  price         Int
-  year          Int
-  mileage       Int?
-  city          String
-  batteryHealth Float?   @map("battery_health")
-  condition     String   @default("USED")   // NEW | USED | CERTIFIED
-  description   String?
-  status        String   @default("ACTIVE") // ACTIVE | SOLD | EXPIRED
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  id              String   @id @default(cuid())
+  userId          String?  @map("user_id")          // null = anonymous listing
+  evModelId       String?  @map("ev_model_id")      // null if model not in DB
+  evName          String?  @map("ev_name")           // denormalised / for untracked models
+  price           Int
+  year            Int
+  mileage         Int?
+  city            String
+  batteryHealth   Float?   @map("battery_health")
+  condition       String   @default("USED")          // NEW | USED | CERTIFIED
+  description     String?
+  images          String?                             // JSON-encoded array of URLs
+  contactName     String?  @map("contact_name")
+  contactPhone    String?  @map("contact_phone")
+  contactWhatsapp String?  @map("contact_whatsapp")
+  status          String   @default("PENDING")       // PENDING | ACTIVE | SOLD | EXPIRED
+  featured        Boolean  @default(false)
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
 
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  evModel EvModel @relation(fields: [evModelId], references: [id])
+  user    User?   @relation(fields: [userId],   references: [id], onDelete: SetNull)
+  evModel EvModel? @relation(fields: [evModelId], references: [id])
 
   @@index([evModelId])
   @@index([city])
   @@index([price])
+  @@index([status])
   @@index([createdAt])
   @@map("listings")
 }
@@ -198,7 +255,12 @@ model ChargingStation {
   availableSpots   Int?     @default(2) @map("available_spots")
   liveStatus       String?  @default("OPERATIONAL") @map("live_status")
   address          String?
+  mapLink          String?  @map("map_link")
+  isOnline         Boolean  @default(true) @map("is_online")
+  lastUpdated      DateTime @default(now()) @map("last_updated")
   createdAt        DateTime @default(now()) @map("created_at")
+
+  savedBy User[] @relation("UserSavedStations")
 
   @@index([city])
   @@index([network])
@@ -299,4 +361,77 @@ model Article {
   @@index([category])
   @@index([publishedAt])
   @@map("articles")
+}
+
+// ─── Price / Availability Alerts ──────────────────────────────────────────────
+
+model PriceAlert {
+  id          String   @id @default(cuid())
+  email       String
+  evModelId   String?  @map("ev_model_id")
+  evName      String?  @map("ev_name")
+  evSlug      String?  @map("ev_slug")
+  targetPrice Int?     @map("target_price")   // null = any drop
+  alertType   String   @default("PRICE_DROP") // PRICE_DROP | AVAILABILITY
+  status      String   @default("ACTIVE")     // ACTIVE | TRIGGERED | CANCELLED
+  createdAt   DateTime @default(now())        @map("created_at")
+
+  @@index([evSlug])
+  @@index([email])
+  @@index([alertType, status])
+  @@map("price_alerts")
+}
+
+// ─── Newsletter Subscribers ───────────────────────────────────────────────────
+
+model NewsletterSubscriber {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  // Where on the site the signup happened
+  source    String?  // "footer" | "article_inline" | "ev_detail" | "banner"
+  locale    String?  @default("en")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([createdAt])
+  @@map("newsletter_subscribers")
+}
+
+// ─── Dealer Leads ─────────────────────────────────────────────────────────────
+
+model Lead {
+  id        String   @id @default(cuid())
+  evModelId String?  @map("ev_model_id")
+  evName    String?  @map("ev_name")          // Denormalised for quick reads
+  name      String
+  phone     String
+  email     String?
+  city      String?
+  message   String?
+  source    String?  // "ev_detail" | "listing" | "compare"
+  // Workflow state
+  status    String   @default("NEW")           // NEW | CONTACTED | CONVERTED | CLOSED
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt                @map("updated_at")
+
+  @@index([evModelId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("leads")
+}
+
+// ─── Affiliate Links ──────────────────────────────────────────────────────────
+
+model AffiliateLink {
+  id          String   @id @default(cuid())
+  evModelId   String   @map("ev_model_id")
+  dealerName  String   @map("dealer_name")
+  url         String
+  utmParams   String?  @map("utm_params")
+  clicks      Int      @default(0)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  evModel EvModel @relation("EvModelAffiliates", fields: [evModelId], references: [id], onDelete: Cascade)
+
+  @@index([evModelId])
+  @@map("affiliate_links")
 }

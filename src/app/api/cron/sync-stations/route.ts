@@ -86,7 +86,7 @@ export async function GET(req: NextRequest) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           .map((c: any) => OCM_CONNECTOR[c.ConnectionTypeID] ?? c.ConnectionType?.Title ?? "Unknown")
           .filter(Boolean);
-        const connectorTypes = [...new Set<string>(connectors)].join(",") || "CCS2";
+        const connectorTypes = Array.from(new Set<string>(connectors)).join(",") || "CCS2";
 
         // Max power
         // eslint-disable-next-line @typescript-eslint/no-explicit-any

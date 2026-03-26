@@ -59,6 +59,16 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Urdu Typography */
+[lang="ur"] body {
+  font-family: 'Noto Nastaliq Urdu', 'Inter', 'Space Grotesk', system-ui, serif;
+  line-height: 2.2; /* Urdu needs more line height */
+}
+
+[lang="ur"] h1, [lang="ur"] h2, [lang="ur"] h3 {
+  line-height: 1.8;
+}
+
 /* ── Semantic text helpers ── */
 .text-content         { color: #0F172A; }
 .text-content-muted   { color: #475569; }

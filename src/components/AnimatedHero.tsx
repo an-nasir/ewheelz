@@ -105,16 +105,66 @@ export default function AnimatedHero({ stats }: Props) {
               <span className="block text-gradient-primary">for Pakistan</span>
             </h1>
 
-            <p className="fade-up delay-2 text-lg sm:text-xl text-slate-500 max-w-xl mb-10 leading-relaxed mx-auto lg:mx-0">
-              Plan smarter trips. Track real-world efficiency. Discover reliable charging stations across Pakistan.
+            <p className="fade-up delay-2 text-lg sm:text-xl text-slate-500 max-w-xl mb-8 leading-relaxed mx-auto lg:mx-0">
+              Compare EVs, calculate EMIs, find charging stations. Pakistan&apos;s #1 EV buying platform.
             </p>
 
-            <div className="fade-up delay-3 flex flex-col sm:flex-row items-center lg:items-start justify-center lg:justify-start gap-4 mb-12">
-              <MagneticButton href="/ev" className="btn-primary text-base px-8 py-3.5">
-                Explore EV Intelligence →
+            {/* ── Quick Search / Filter Bar ── */}
+            <div className="fade-up delay-3 mb-8 max-w-lg mx-auto lg:mx-0">
+              <div className="bg-white rounded-2xl border border-[#E6E9F2] shadow-lg p-2 flex flex-col sm:flex-row gap-2"
+                style={{ boxShadow: "0 8px 32px rgba(99,102,241,0.12)" }}>
+                <select
+                  className="flex-1 px-3 py-2.5 text-sm font-semibold text-slate-700 rounded-xl border border-[#E6E9F2] focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 bg-slate-50"
+                  defaultValue=""
+                  onChange={e => { if (e.target.value) window.location.href = `/ev?budget=${e.target.value}`; }}
+                >
+                  <option value="" disabled>💰 Budget range</option>
+                  <option value="0-4">Under PKR 4M</option>
+                  <option value="4-8">PKR 4M – 8M</option>
+                  <option value="8-14">PKR 8M – 14M</option>
+                  <option value="14-99">PKR 14M+</option>
+                </select>
+                <select
+                  className="flex-1 px-3 py-2.5 text-sm font-semibold text-slate-700 rounded-xl border border-[#E6E9F2] focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 bg-slate-50"
+                  defaultValue=""
+                  onChange={e => { if (e.target.value) window.location.href = `/ev?usecase=${e.target.value}`; }}
+                >
+                  <option value="" disabled>🗺️ Use case</option>
+                  <option value="city">City commute</option>
+                  <option value="mixed">City + Intercity</option>
+                  <option value="intercity">Frequent intercity</option>
+                  <option value="family">Family SUV</option>
+                </select>
+                <Link href="/ev"
+                  className="px-5 py-2.5 rounded-xl text-sm font-bold text-white flex-shrink-0 flex items-center justify-center gap-1.5 transition-all hover:opacity-90"
+                  style={{ background: "linear-gradient(135deg,#6366F1,#8B5CF6)" }}>
+                  <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                  </svg>
+                  Find My EV
+                </Link>
+              </div>
+              <div className="flex flex-wrap gap-2 mt-2 justify-center lg:justify-start">
+                {[
+                  { label: "🏙️ City EVs",        href: "/ev?usecase=city" },
+                  { label: "💰 Under 8M",          href: "/ev?budget=4-8" },
+                  { label: "🔋 LFP Battery",       href: "/ev?battery=LFP" },
+                  { label: "⚡ Fast Charging",      href: "/ev?charging=fast" },
+                ].map(tag => (
+                  <Link key={tag.href} href={tag.href}
+                    className="text-[11px] font-semibold px-3 py-1 rounded-full bg-white border border-[#E6E9F2] text-slate-600 hover:border-indigo-300 hover:text-indigo-600 transition-all">
+                    {tag.label}
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            <div className="fade-up delay-3 flex flex-col sm:flex-row items-center lg:items-start justify-center lg:justify-start gap-4 mb-10">
+              <MagneticButton href="/peos" className="btn-primary text-base px-8 py-3.5">
+                🇵🇰 Find My Perfect EV →
               </MagneticButton>
-              <MagneticButton href="/compare" className="btn-outline text-base px-8 py-3.5">
-                Compare EVs
+              <MagneticButton href="/listings" className="btn-outline text-base px-8 py-3.5">
+                🚗 Browse Listings
               </MagneticButton>
             </div>
 

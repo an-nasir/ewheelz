@@ -1,3 +1,7 @@
+import createNextIntlPlugin from 'next-intl/plugin';
+ 
+const withNextIntl = createNextIntlPlugin();
+ 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   typescript: {
@@ -22,9 +26,8 @@ const nextConfig = {
       { source: "/blog",  destination: "/articles",     permanent: true },
       { source: "/news",  destination: "/articles",     permanent: true },
       { source: "/map",   destination: "/charging-map", permanent: false },
-      // NOTE: removed /compare → /compare (caused infinite redirect loop)
     ];
   },
 };
-
-export default nextConfig;
+ 
+export default withNextIntl(nextConfig);
