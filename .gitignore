@@ -8,3 +8,4 @@ prisma/dev.db-journal
 .DS_Store
 mobile/node_modules/
 push-to-github.js
+data/*.json

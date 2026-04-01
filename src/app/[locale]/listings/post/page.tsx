@@ -37,12 +37,15 @@ export default function PostListingPage() {
           year:            form.year,
           mileage:         form.mileage || null,
           city:            form.city,
-          batteryHealth:   form.batteryHealth || null,
+          // Map grade letter → numeric health % for DB storage
+          batteryHealth:   form.batteryHealth
+            ? ({ A: 95, B: 85, C: 75, D: 65, F: 50 } as Record<string,number>)[form.batteryHealth] ?? null
+            : null,
           condition:       form.condition,
           description:     form.description || null,
           contactName:     form.contactName,
           contactPhone:    form.contactPhone,
-          contactWhatsapp: form.contactPhone,  // use same number for WhatsApp
+          contactWhatsapp: form.contactPhone,
         }),
       });
       if (res.ok) {
@@ -217,11 +220,49 @@ export default function PostListingPage() {
               </div>
             </div>
 
+            {/* Battery Health Gate — nudge for USED cars */}
+            {form.condition === "USED" && (
+              <div className="rounded-2xl p-4 border-2 border-emerald-200 bg-emerald-50">
+                <div className="flex items-start gap-3">
+                  <span className="text-2xl">🔋</span>
+                  <div className="flex-1">
+                    <div className="text-sm font-black text-emerald-900 mb-0.5">Add a Battery Health Report</div>
+                    <p className="text-xs text-emerald-700 mb-3">
+                      Listings with a verified battery grade sell faster and at better prices. Buyers trust the number.
+                    </p>
+                    <div className="flex gap-2">
+                      <a href={`/battery-health?evName=${encodeURIComponent(`${form.brand} ${form.model}`.trim())}&year=${form.year}&odometer=${form.mileage || 0}`}
+                        target="_blank" rel="noreferrer"
+                        className="px-3 py-1.5 rounded-lg text-xs font-black text-white bg-emerald-600 hover:bg-emerald-700 transition-colors">
+                        Run Battery Check →
+                      </a>
+                      <span className="text-xs text-emerald-600 self-center">Opens in new tab — come back after</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div>
-              <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5 block">Battery Health %</label>
-              <input type="number" min="50" max="100" value={form.batteryHealth} onChange={e => set("batteryHealth", e.target.value)} placeholder="e.g. 94"
-                className="w-full rounded-xl border border-[#E6E9F2] px-4 py-2.5 text-sm focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100" />
-              <p className="text-xs text-slate-400 mt-1">Check BMS app for accurate reading. Helps build buyer trust.</p>
+              <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5 block">
+                Battery Health Grade
+                {form.batteryHealth && <span className="ml-2 text-emerald-600 font-black">✓ Added</span>}
+              </label>
+              <div className="flex gap-2">
+                {(["A","B","C","D","F"]).map(g => (
+                  <button key={g} type="button" onClick={() => set("batteryHealth", g)}
+                    className={`flex-1 py-2 rounded-xl text-sm font-black border transition-all
+                      ${form.batteryHealth === g ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-slate-600 border-slate-200"}`}>
+                    {g}
+                  </button>
+                ))}
+                <button type="button" onClick={() => set("batteryHealth", "")}
+                  className={`px-3 py-2 rounded-xl text-xs font-bold border transition-all
+                    ${!form.batteryHealth ? "bg-slate-200 text-slate-700 border-slate-300" : "bg-white text-slate-400 border-slate-200"}`}>
+                  Skip
+                </button>
+              </div>
+              <p className="text-xs text-slate-400 mt-1.5">Got your grade from the battery check? Enter it here.</p>
             </div>
 
             <div>

@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import WhatsAppButton from "@/components/WhatsAppButton";
+import MarkSoldButton from "@/components/MarkSoldButton";
 
 export const metadata = {
   title: "Buy & Sell EVs — Pakistan",
@@ -190,7 +191,17 @@ export default async function ListingsPage({ searchParams }: { searchParams: Sea
                       <div className="flex flex-wrap gap-4 mt-2 text-xs text-slate-400">
                         <span>📍 {l.city}</span>
                         {l.mileage       != null && <span>🛣 {l.mileage.toLocaleString()} km</span>}
-                        {l.batteryHealth != null && <span>🔋 {l.batteryHealth}% health</span>}
+                        {l.batteryHealth != null && (() => {
+                          const h = l.batteryHealth!;
+                          const grade = h >= 90 ? "A" : h >= 80 ? "B" : h >= 70 ? "C" : h >= 60 ? "D" : "F";
+                          const gc = grade === "A" ? "#16A34A" : grade === "B" ? "#6366F1" : grade === "C" ? "#D97706" : grade === "D" ? "#EA580C" : "#DC2626";
+                          return (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black"
+                              style={{ background: `${gc}15`, color: gc, border: `1px solid ${gc}30` }}>
+                              🔋 Grade {grade}
+                            </span>
+                          );
+                        })()}
                         {(l.user?.name || l.contactName) && <span>👤 {l.user?.name ?? l.contactName}</span>}
                       </div>
                     </div>
@@ -221,6 +232,9 @@ export default async function ListingsPage({ searchParams }: { searchParams: Sea
                           View EV specs →
                         </Link>
                       )}
+
+                      {/* Mark as Sold */}
+                      <MarkSoldButton listingId={l.id} price={l.price} />
                     </div>
                   </div>
                 </div>

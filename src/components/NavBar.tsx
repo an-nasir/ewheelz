@@ -39,7 +39,9 @@ const GROUPS: NavGroup[] = [
       { href: "/charging-map",    icon: "🔌", labelKey: "chargingStations", descKey: "chargingStationsDesc", color: "#22C55E" },
       { href: "/cost-calculator", icon: "💰", labelKey: "costCalculator",   descKey: "costCalculatorDesc",   color: "#10B981" },
       { href: "/emi-calculator",  icon: "🏦", labelKey: "emiCalculator",    descKey: "emiCalculatorDesc",    badge: "New", color: "#F59E0B" },
-      { href: "/home-charging",   icon: "⚡", labelKey: "homeCharging",     descKey: "homeChargingDesc",     badge: "New", color: "#3B82F6" },
+      { href: "/home-charging",    icon: "⚡", labelKey: "homeCharging",     descKey: "homeChargingDesc",     badge: "New", color: "#3B82F6" },
+      { href: "/battery-health",   icon: "🔋", labelKey: "batteryHealth",    descKey: "batteryHealthDesc",    badge: "New", color: "#22C55E" },
+      { href: "/ev-valuation",     icon: "💰", labelKey: "evValuation",      descKey: "evValuationDesc",      badge: "New", color: "#8B5CF6" },
     ],
   },
 ];
