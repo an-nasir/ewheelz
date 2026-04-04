@@ -158,70 +158,82 @@ export default async function HomePage() {
       {/* ── 1. Hero — 2-col with car image ──────────────────────────────────── */}
       <AnimatedHero totalListings={totalListings} />
 
+      {/* Top bridge — melts into section */}
+      <div style={{ height: 32, background: "linear-gradient(to bottom, #ffffff, rgba(245,243,255,0.5))" }} />
+
       {/* ── 2. Corolla vs EV — high up, hooks petrol-car owners immediately ─── */}
-      <section style={{ background: "#ffffff" }}>
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
-          <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid #E6E9F2" }}>
+      <section style={{ background: "linear-gradient(180deg, rgba(245,243,255,0.5) 0%, rgba(250,251,255,0.7) 100%)" }}>
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12">
+          {/* Badge + intro */}
+          <div className="mb-8 text-center max-w-2xl mx-auto">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest mb-4"
+              style={{ background: "rgba(34,197,94,0.15)", color: "#4ADE80", border: "1px solid rgba(34,197,94,0.25)" }}>
+              🚗 Still driving a Corolla?
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-black text-slate-900 mb-3 leading-tight">
+              You&apos;re burning <span style={{ color: "#EF4444" }}>PKR 500K/year</span> on fuel
+            </h2>
+            <p className="text-slate-600 text-base leading-relaxed">
+              EV energy costs PKR 3/km. Petrol costs PKR 20/km. That&apos;s PKR 425,000 saved every single year.
+            </p>
+          </div>
+
+          {/* Comparison card */}
+          <div className="rounded-3xl overflow-hidden border border-[#E6E9F2] shadow-sm">
             <div className="grid sm:grid-cols-2">
-              {/* Left — dark hook */}
-              <div style={{ background: "linear-gradient(135deg,#0F172A,#1E293B)" }} className="p-7">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-3"
-                  style={{ background: "rgba(34,197,94,0.15)", color: "#4ADE80", border: "1px solid rgba(34,197,94,0.25)" }}>
-                  🚗 Still driving a Corolla?
-                </div>
-                <h2 className="text-xl font-black text-white mb-2 leading-tight">
-                  You&apos;re spending <span style={{ color: "#F87171" }}>PKR 500K/year</span> on petrol you don&apos;t have to
-                </h2>
-                <p className="text-slate-400 text-sm leading-relaxed mb-5">
-                  Petrol at PKR 280/L. Electricity at PKR 50/kWh. BYD Seal costs PKR 3/km.
-                </p>
-                <div className="grid grid-cols-2 gap-2">
-                  {[
-                    { label: "Corolla per km", val: "PKR 20", note: "1600cc city driving" },
-                    { label: "BYD Seal per km", val: "PKR 3",  note: "Pakistan grid avg" },
-                  ].map(({ label, val, note }) => (
-                    <div key={label} className="rounded-xl p-3" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                      <div className="text-[10px] text-slate-400 mb-0.5">{label}</div>
-                      <div className="text-base font-black text-white">{val}</div>
-                      <div className="text-[10px] text-slate-500">{note}</div>
-                    </div>
-                  ))}
+              {/* Left — Corolla (red) */}
+              <div style={{ background: "linear-gradient(135deg, #FEF2F2, #FEE2E2)" }} className="p-8 sm:p-10">
+                <div className="text-xs font-black text-red-600 uppercase tracking-widest mb-3">Your Current Car</div>
+                <div className="text-2xl font-black text-slate-900 mb-2">Toyota Corolla 1600cc</div>
+                <div className="text-sm text-slate-600 mb-6">City driving, petrol @ PKR 280/L</div>
+
+                <div className="space-y-3 mb-8">
+                  <div className="rounded-2xl p-4" style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.15)" }}>
+                    <div className="text-xs text-slate-500 mb-1">Per km cost</div>
+                    <div className="text-2xl font-black text-red-600">PKR 20</div>
+                  </div>
+                  <div className="rounded-2xl p-4" style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.15)" }}>
+                    <div className="text-xs text-slate-500 mb-1">Annual fuel (25k km)</div>
+                    <div className="text-2xl font-black text-red-600">PKR 500K</div>
+                  </div>
                 </div>
               </div>
 
-              {/* Right — result */}
-              <div className="p-7 flex flex-col justify-center">
-                <div className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">At 25,000 km/year</div>
-                {[
-                  { label: "Corolla fuel/year",    val: "PKR 500K", color: "#EF4444", bg: "#FEF2F2" },
-                  { label: "BYD energy/year",      val: "PKR 75K",  color: "#16A34A", bg: "#F0FDF4" },
-                ].map(({ label, val, color, bg }) => (
-                  <div key={label} className="flex items-center justify-between rounded-xl px-4 py-3 mb-3"
-                    style={{ background: bg, border: `1px solid ${color}20` }}>
-                    <span className="text-xs font-semibold text-slate-600">{label}</span>
-                    <span className="font-black text-sm" style={{ color }}>{val}</span>
+              {/* Right — EV (green) */}
+              <div style={{ background: "linear-gradient(135deg, #F0FDF4, #DCFCE7)" }} className="p-8 sm:p-10">
+                <div className="text-xs font-black text-green-600 uppercase tracking-widest mb-3">Switch to EV</div>
+                <div className="text-2xl font-black text-slate-900 mb-2">BYD Seal / Atto 3</div>
+                <div className="text-sm text-slate-600 mb-6">Electric, grid avg @ PKR 50/kWh</div>
+
+                <div className="space-y-3 mb-8">
+                  <div className="rounded-2xl p-4" style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.15)" }}>
+                    <div className="text-xs text-slate-500 mb-1">Per km cost</div>
+                    <div className="text-2xl font-black text-green-600">PKR 3</div>
                   </div>
-                ))}
-                <div className="rounded-2xl p-5 text-center mb-4"
-                  style={{ background: "linear-gradient(135deg,#EEF2FF,#F0FDF4)", border: "2px solid #BBF7D0" }}>
-                  <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">You save every year</div>
-                  <div className="text-3xl font-black"
-                    style={{ background: "linear-gradient(90deg,#22C55E,#6366F1)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
-                    PKR 425K
+                  <div className="rounded-2xl p-4" style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.15)" }}>
+                    <div className="text-xs text-slate-500 mb-1">Annual energy (25k km)</div>
+                    <div className="text-2xl font-black text-green-600">PKR 75K</div>
                   </div>
-                  <div className="text-xs text-slate-400 mt-1">PKR 2.1M over 5 years · enough for EMI payments</div>
                 </div>
-                <Link href="/listings?brand=BYD" className="block text-center py-3 rounded-xl text-sm font-black text-white"
-                  style={{ background: "linear-gradient(135deg,#22C55E,#6366F1)" }}>
-                  See BYD listings in Pakistan →
-                </Link>
               </div>
             </div>
+          </div>
+
+          {/* Savings highlight */}
+          <div className="mt-8 rounded-3xl p-8 text-center" style={{ background: "linear-gradient(135deg, #6366F1, #8B5CF6)" }}>
+            <div className="text-sm font-black text-indigo-100 uppercase tracking-widest mb-2">Annual savings</div>
+            <div className="text-5xl font-black text-white mb-2">PKR 425,000</div>
+            <div className="text-indigo-100 text-sm">That&apos;s PKR 2.1M over 5 years — enough to cover your EV EMI</div>
+            <Link href="/listings?brand=BYD" className="inline-block mt-6 px-8 py-4 rounded-2xl text-sm font-black text-white transition-all hover:scale-105"
+              style={{ background: "rgba(255,255,255,0.2)", border: "2px solid rgba(255,255,255,0.3)" }}>
+              See affordable EVs in Pakistan →
+            </Link>
           </div>
         </div>
       </section>
 
-      <div style={{ height: 32, background: "linear-gradient(to bottom, #ffffff, #0F172A)" }} />
+      {/* Bottom bridge — melts into dark section */}
+      <div style={{ height: 32, background: "linear-gradient(to bottom, rgba(250,251,255,0.7), #0F172A)" }} />
 
       {/* ── 3. Market Pulse — dark, each card links to filtered listings ─────── */}
       {pulse.length > 0 && (
