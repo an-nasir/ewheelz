@@ -16,26 +16,26 @@ function pick<T>(arr: T[]): T { return arr[rnd(0, arr.length - 1)]; }
 function waNum() { return `${pick(WA_PREFIXES)}${rnd(1000000, 9999999)}`; }
 function sellerToken() { return randomBytes(20).toString("hex"); }
 
-// Realistic Pakistani EV market data (April 2026)
+// Realistic Pakistani EV market data (April 2026) — 400+ listings
 const LISTINGS_DATA = [
   // BYD Seal — premium sedan, 11-15M range
-  { evName: "BYD Seal", brand: "BYD", model: "Seal", yearMin: 2023, yearMax: 2025, priceMin: 11_000_000, priceMax: 15_500_000, mileageMin: 5000, mileageMax: 45000, battMin: 85, battMax: 99, count: 10 },
+  { evName: "BYD Seal", brand: "BYD", model: "Seal", yearMin: 2023, yearMax: 2025, priceMin: 11_000_000, priceMax: 15_500_000, mileageMin: 5000, mileageMax: 45000, battMin: 85, battMax: 99, count: 80 },
   // BYD Atto 3 — most popular, 9-14M
-  { evName: "BYD Atto 3", brand: "BYD", model: "Atto 3", yearMin: 2022, yearMax: 2025, priceMin: 8_500_000, priceMax: 13_800_000, mileageMin: 8000, mileageMax: 65000, battMin: 78, battMax: 98, count: 10 },
+  { evName: "BYD Atto 3", brand: "BYD", model: "Atto 3", yearMin: 2022, yearMax: 2025, priceMin: 8_500_000, priceMax: 13_800_000, mileageMin: 8000, mileageMax: 65000, battMin: 78, battMax: 98, count: 80 },
   // MG ZS EV — value pick, 5-9M
-  { evName: "MG ZS EV", brand: "MG", model: "ZS EV", yearMin: 2021, yearMax: 2024, priceMin: 4_500_000, priceMax: 8_800_000, mileageMin: 15000, mileageMax: 80000, battMin: 72, battMax: 95, count: 8 },
+  { evName: "MG ZS EV", brand: "MG", model: "ZS EV", yearMin: 2021, yearMax: 2024, priceMin: 4_500_000, priceMax: 8_800_000, mileageMin: 15000, mileageMax: 80000, battMin: 72, battMax: 95, count: 64 },
   // Hyundai IONIQ 5 — premium, 13-18M
-  { evName: "Hyundai IONIQ 5", brand: "Hyundai", model: "IONIQ 5", yearMin: 2022, yearMax: 2025, priceMin: 13_000_000, priceMax: 18_500_000, mileageMin: 5000, mileageMax: 35000, battMin: 88, battMax: 99, count: 5 },
+  { evName: "Hyundai IONIQ 5", brand: "Hyundai", model: "IONIQ 5", yearMin: 2022, yearMax: 2025, priceMin: 13_000_000, priceMax: 18_500_000, mileageMin: 5000, mileageMax: 35000, battMin: 88, battMax: 99, count: 40 },
   // Hyundai Kona Electric
-  { evName: "Hyundai Kona Electric", brand: "Hyundai", model: "Kona Electric", yearMin: 2021, yearMax: 2024, priceMin: 7_500_000, priceMax: 11_000_000, mileageMin: 10000, mileageMax: 55000, battMin: 75, battMax: 95, count: 4 },
+  { evName: "Hyundai Kona Electric", brand: "Hyundai", model: "Kona Electric", yearMin: 2021, yearMax: 2024, priceMin: 7_500_000, priceMax: 11_000_000, mileageMin: 10000, mileageMax: 55000, battMin: 75, battMax: 95, count: 32 },
   // Changan Alsvin EV (very cheap, local)
-  { evName: "Changan Alsvin EV", brand: "Changan", model: "Alsvin EV", yearMin: 2022, yearMax: 2025, priceMin: 3_500_000, priceMax: 5_200_000, mileageMin: 5000, mileageMax: 40000, battMin: 80, battMax: 98, count: 5 },
+  { evName: "Changan Alsvin EV", brand: "Changan", model: "Alsvin EV", yearMin: 2022, yearMax: 2025, priceMin: 3_500_000, priceMax: 5_200_000, mileageMin: 5000, mileageMax: 40000, battMin: 80, battMax: 98, count: 40 },
   // Deepal S07
-  { evName: "Deepal S07", brand: "Deepal", model: "S07", yearMin: 2023, yearMax: 2025, priceMin: 9_000_000, priceMax: 12_500_000, mileageMin: 3000, mileageMax: 25000, battMin: 88, battMax: 99, count: 4 },
+  { evName: "Deepal S07", brand: "Deepal", model: "S07", yearMin: 2023, yearMax: 2025, priceMin: 9_000_000, priceMax: 12_500_000, mileageMin: 3000, mileageMax: 25000, battMin: 88, battMax: 99, count: 32 },
   // Tesla Model 3 — rare, expensive
-  { evName: "Tesla Model 3", brand: "Tesla", model: "Model 3", yearMin: 2021, yearMax: 2024, priceMin: 14_000_000, priceMax: 22_000_000, mileageMin: 20000, mileageMax: 60000, battMin: 80, battMax: 95, count: 2 },
+  { evName: "Tesla Model 3", brand: "Tesla", model: "Model 3", yearMin: 2021, yearMax: 2024, priceMin: 14_000_000, priceMax: 22_000_000, mileageMin: 20000, mileageMax: 60000, battMin: 80, battMax: 95, count: 16 },
   // BYD Yuan Plus
-  { evName: "BYD Yuan Plus", brand: "BYD", model: "Yuan Plus", yearMin: 2023, yearMax: 2025, priceMin: 7_500_000, priceMax: 10_500_000, mileageMin: 3000, mileageMax: 30000, battMin: 85, battMax: 99, count: 2 },
+  { evName: "BYD Yuan Plus", brand: "BYD", model: "Yuan Plus", yearMin: 2023, yearMax: 2025, priceMin: 7_500_000, priceMax: 10_500_000, mileageMin: 3000, mileageMax: 30000, battMin: 85, battMax: 99, count: 16 },
 ];
 
 const DESCRIPTIONS = [
@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
 
   // Check how many listings already exist
   const existing = await prisma.listing.count();
-  if (existing >= 50) {
+  if (existing >= 400) {
     return NextResponse.json({ message: `Already have ${existing} listings, skipping seed.`, existing });
   }
 
