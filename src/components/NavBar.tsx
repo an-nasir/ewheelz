@@ -1,334 +1,282 @@
 "use client";
 // src/components/NavBar.tsx
+// Human-first nav: Compare / Plan / Insights / News / Buy & Sell
+// Dropdown: 2-col card grid, Stripe/Linear style
 
-import {useTranslations, useLocale} from 'next-intl';
-import {Link, usePathname, useRouter} from "@/navigation";
-import { useState, useRef } from "react";
+import { Link, usePathname, useRouter } from "@/navigation";
+import { useLocale } from "next-intl";
+import { useState, useRef, useEffect } from "react";
 import { signIn, signOut, useSession } from "next-auth/react";
 
-interface NavItem {
-  href: string;
-  icon: string;
-  labelKey: string;
-  descKey: string;
-  badge?: string;
-  color?: string;
-}
-interface NavGroup {
-  id: string;
-  labelKey: string;
-  items: NavItem[];
-}
-
-const GROUPS: NavGroup[] = [
+const GROUPS = [
   {
-    id: "explore",
-    labelKey: "explore",
+    id: "compare", label: "Compare",
     items: [
-      { href: "/ev",       icon: "⚡", labelKey: "evDatabase",   descKey: "evDatabaseDesc",  color: "#6366F1" },
-      { href: "/compare",  icon: "⚖️", labelKey: "compare",      descKey: "compareDesc",     color: "#8B5CF6" },
-      { href: "/ev-range", icon: "📊", labelKey: "range",        descKey: "rangeDesc",       badge: "New", color: "#3B82F6" },
-      { href: "/peos",     icon: "🇵🇰", labelKey: "readiness",    descKey: "readinessDesc",   badge: "P4", color: "#22C55E" },
+      { href: "/ev",       icon: "⚡", title: "EV Database",    desc: "17 EVs tracked in Pakistan",          color: "#6366F1" },
+      { href: "/compare",  icon: "⚖️", title: "Compare EVs",    desc: "Side-by-side spec comparison",         color: "#8B5CF6" },
+      { href: "/ev-range", icon: "📊", title: "Range Reality",   desc: "Real-world range in Pakistan",        color: "#3B82F6", badge: "New" },
+      { href: "/peos",     icon: "🇵🇰", title: "EV Match Quiz",  desc: "Find your perfect EV in 2 mins",     color: "#22C55E" },
     ],
   },
   {
-    id: "tools",
-    labelKey: "tools",
+    id: "plan", label: "Plan",
     items: [
-      { href: "/trip-planner",    icon: "🗺️", labelKey: "tripPlanner",      descKey: "tripPlannerDesc",      color: "#6366F1" },
-      { href: "/charging-map",    icon: "🔌", labelKey: "chargingStations", descKey: "chargingStationsDesc", color: "#22C55E" },
-      { href: "/cost-calculator", icon: "💰", labelKey: "costCalculator",   descKey: "costCalculatorDesc",   color: "#10B981" },
-      { href: "/emi-calculator",  icon: "🏦", labelKey: "emiCalculator",    descKey: "emiCalculatorDesc",    badge: "New", color: "#F59E0B" },
-      { href: "/home-charging",    icon: "⚡", labelKey: "homeCharging",     descKey: "homeChargingDesc",     badge: "New", color: "#3B82F6" },
-      { href: "/battery-health",   icon: "🔋", labelKey: "batteryHealth",    descKey: "batteryHealthDesc",    badge: "New", color: "#22C55E" },
-      { href: "/ev-valuation",     icon: "💰", labelKey: "evValuation",      descKey: "evValuationDesc",      badge: "New", color: "#8B5CF6" },
+      { href: "/trip-planner",   icon: "🗺️", title: "Trip Planner",   desc: "Plan routes with charging stops",     color: "#6366F1" },
+      { href: "/charging-map",   icon: "🔌", title: "Charging Map",    desc: "16+ live stations across Pakistan",   color: "#22C55E" },
+      { href: "/emi-calculator", icon: "🏦", title: "EMI Calculator",  desc: "HBL, MCB, Meezan financing",          color: "#F59E0B", badge: "New" },
+      { href: "/home-charging",  icon: "⚡", title: "Home Charging",   desc: "Wallbox, solar & load-shedding tips", color: "#3B82F6" },
     ],
   },
-];
+  {
+    id: "insights", label: "Insights",
+    items: [
+      { href: "/battery-health",  icon: "🔋", title: "Battery Health",  desc: "A–F grade in 30 sec. #1 hidden cost", color: "#22C55E", badge: "Free" },
+      { href: "/ev-valuation",    icon: "💰", title: "Resale Value",    desc: "Real PKR range, no dealer BS",         color: "#8B5CF6" },
+      { href: "/import-duty",     icon: "📦", title: "Import Duty",     desc: "Exact duties on any EV to Pakistan",   color: "#EC4899", badge: "Only here" },
+      { href: "/price-index",     icon: "📈", title: "Price Index",     desc: "6-month trend charts, live data",      color: "#34D399", badge: "Live" },
+      { href: "/cost-calculator", icon: "⛽", title: "EV vs Petrol",   desc: "5-year savings vs a Corolla",          color: "#F59E0B" },
+    ],
+  },
+] as const;
 
-// Direct links visible in the nav bar (no dropdown)
-const DIRECT_LINKS = [
-  { href: "/articles",    labelKey: "news",      icon: "📰" },
-  { href: "/listings",    labelKey: "listings",  icon: "🚗" },
-  { href: "/for-dealers", labelKey: "forDealers", icon: "🏪" },
+type GroupItem = { href: string; icon: string; title: string; desc: string; color: string; badge?: string };
+
+const DIRECT = [
+  { href: "/articles", label: "News",       icon: "📰" },
+  { href: "/listings", label: "Buy & Sell", icon: "🚗" },
 ];
 
 export default function NavBar() {
-  const t = useTranslations('common');
-  const pathname = usePathname();
-  const router = useRouter();
-  const locale = useLocale();
+  const pathname   = usePathname();
+  const router     = useRouter();
+  const locale     = useLocale();
   const { data: session, status } = useSession();
-  const [activeGroup, setActiveGroup] = useState<string | null>(null);
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [mobileExpanded, setMobileExpanded] = useState<string | null>(null);
+  const [active, setActive]       = useState<string | null>(null);
+  const [mobileOpen, setMobileOpen]       = useState(false);
+  const [mobileExp, setMobileExp]         = useState<string | null>(null);
+  const [scrolled, setScrolled]           = useState(false);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const openGroup = (id: string) => {
-    if (closeTimer.current) clearTimeout(closeTimer.current);
-    setActiveGroup(id);
-  };
-  const scheduleClose = () => {
-    closeTimer.current = setTimeout(() => setActiveGroup(null), 130);
-  };
-  const isGroupActive = (items: NavItem[]) => items.some((i) => pathname?.startsWith(i.href));
+  const openMenu  = (id: string) => { if (closeTimer.current) clearTimeout(closeTimer.current); setActive(id); };
+  const closeMenu = () => { closeTimer.current = setTimeout(() => setActive(null), 140); };
+  const toggleLang = () => router.replace(pathname, { locale: locale === "en" ? "ur" : "en" });
 
-  // Use useLocale() — pathname from next-intl navigation has NO locale prefix
-  const toggleLanguage = () => {
-    const newLocale = locale === 'en' ? 'ur' : 'en';
-    router.replace(pathname, {locale: newLocale});
-  };
+  useEffect(() => {
+    const h = () => setScrolled(window.scrollY > 10);
+    window.addEventListener("scroll", h);
+    return () => window.removeEventListener("scroll", h);
+  }, []);
 
   return (
     <header
-      className="sticky top-0 z-50 border-b"
+      className={`sticky top-0 z-50 transition-all duration-300 ${scrolled ? "py-2" : "py-3"}`}
       style={{
-        background: "rgba(255,255,255,0.95)",
-        borderColor: "#E6E9F2",
-        backdropFilter: "blur(16px)",
-        WebkitBackdropFilter: "blur(16px)",
+        background: "rgba(255,255,255,0.92)",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+        borderBottom: "1px solid rgba(226,232,240,0.8)",
+        boxShadow: scrolled ? "0 4px 24px rgba(15,23,42,0.06)" : "none",
       }}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
-        <div className="flex items-center justify-between h-14">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between">
 
-          {/* ── Logo ─────────────────────────────────────────────── */}
-          <Link href="/" className="flex items-center gap-2.5 font-bold text-lg shrink-0 group">
-            <div
-              className="w-8 h-8 rounded-xl flex items-center justify-center shadow-sm transition-transform group-hover:scale-105"
-              style={{ background: "linear-gradient(135deg,#6366F1,#8B5CF6)" }}
-            >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5">
-                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+          {/* ── Logo ── */}
+          <Link href="/" className="flex items-center gap-3 shrink-0 group">
+            <div className="w-10 h-10 rounded-2xl flex items-center justify-center transition-all group-hover:scale-105 group-hover:shadow-lg"
+              style={{ background: "linear-gradient(135deg,#6366F1,#8B5CF6)", boxShadow: "0 4px 12px rgba(99,102,241,0.3)" }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3">
+                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </div>
-            <span className="flex flex-col leading-none">
-              <span className="text-slate-900 font-bold tracking-tight text-[15px]">eWheelz</span>
-              <span
-                className="text-[9px] font-semibold tracking-widest uppercase"
-                style={{ background: "linear-gradient(135deg,#6366F1,#8B5CF6)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}
-              >
-                Pakistan EV
+            <div className="flex flex-col leading-tight">
+              <span className="font-black tracking-tight text-[19px] text-slate-900 group-hover:text-indigo-600 transition-colors">eWheelz</span>
+              <span className="text-[8.5px] font-black tracking-[0.2em] uppercase"
+                style={{ background: "linear-gradient(135deg,#6366F1,#8B5CF6)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                PAKISTAN&apos;S EV MARKET
               </span>
-            </span>
+            </div>
           </Link>
 
-          {/* ── Desktop nav ──────────────────────────────────────── */}
-          <nav className="hidden md:flex items-center gap-0.5">
-
-            {/* Dropdown groups */}
-            {GROUPS.map((group) => (
-              <div
-                key={group.id}
-                className="relative"
-                onMouseEnter={() => openGroup(group.id)}
-                onMouseLeave={scheduleClose}
-              >
-                <button
-                  className={`px-3 py-1.5 rounded-lg text-[13.5px] font-medium flex items-center gap-1 transition-all duration-150 ${
-                    isGroupActive(group.items)
-                      ? "text-indigo-600 bg-indigo-50"
-                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
-                  }`}
-                >
-                  {t(group.labelKey)}
-                  <svg
-                    className={`w-3 h-3 opacity-50 transition-transform duration-200 ${activeGroup === group.id ? "rotate-180" : ""}`}
-                    fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                  >
+          {/* ── Desktop nav ── */}
+          <nav className="hidden lg:flex items-center gap-0.5">
+            {GROUPS.map(group => (
+              <div key={group.id} className="relative" onMouseEnter={() => openMenu(group.id)} onMouseLeave={closeMenu}>
+                <button className={`px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-1.5 transition-all duration-150 ${
+                  active === group.id ? "text-indigo-700 bg-indigo-50" : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                }`}>
+                  {group.label}
+                  <svg className={`w-3.5 h-3.5 transition-transform duration-200 ${active === group.id ? "rotate-180 text-indigo-600" : "text-slate-400"}`}
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
 
-                {activeGroup === group.id && (
+                {active === group.id && (
                   <div
-                    className={`absolute top-full mt-2 py-2 min-w-[270px] z-50 rounded-2xl ${t('dir') === 'rtl' ? 'right-0' : 'left-0'}`}
+                    className="absolute top-full mt-2 z-50 rounded-2xl overflow-hidden"
                     style={{
-                      background: "#FFFFFF",
-                      border: "1px solid #E6E9F2",
-                      boxShadow: "0 16px 48px rgba(15,23,42,0.12), 0 4px 12px rgba(99,102,241,0.08)",
+                      left: "50%", transform: "translateX(-50%)",
+                      minWidth: (group.items as readonly GroupItem[]).length >= 5 ? 500 : 440,
+                      background: "#fff",
+                      border: "1px solid rgba(226,232,240,0.9)",
+                      boxShadow: "0 20px 60px rgba(15,23,42,0.12), 0 8px 20px rgba(99,102,241,0.08)",
+                      animation: "dropIn 0.15s ease-out",
                     }}
-                    onMouseEnter={() => openGroup(group.id)}
-                    onMouseLeave={scheduleClose}
+                    onMouseEnter={() => openMenu(group.id)}
+                    onMouseLeave={closeMenu}
                   >
-                    {group.items.map((item) => {
-                      const active = pathname?.startsWith(item.href);
-                      return (
-                        <Link
-                          key={item.href}
-                          href={item.href}
-                          onClick={() => setActiveGroup(null)}
-                          className="flex items-start gap-3 px-4 py-2.5 mx-1 rounded-xl transition-all hover:bg-slate-50"
-                          style={{ background: active ? `${item.color}12` : "transparent" }}
-                        >
-                          <div
-                            className="w-8 h-8 rounded-lg flex items-center justify-center text-sm flex-shrink-0 mt-0.5"
-                            style={{ background: `${item.color}15`, border: `1px solid ${item.color}25` }}
+                    {/* Header strip */}
+                    <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-100">
+                      <span className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">{group.label}</span>
+                      <span className="text-[10px] text-slate-300">{(group.items as readonly GroupItem[]).length} tools</span>
+                    </div>
+
+                    {/* 2-col card grid */}
+                    <div className={`grid gap-1 p-2.5 ${(group.items as readonly GroupItem[]).length >= 4 ? "grid-cols-2" : "grid-cols-1"}`}>
+                      {(group.items as readonly GroupItem[]).map(item => {
+                        const isActive = pathname?.startsWith(item.href);
+                        return (
+                          <Link key={item.href} href={item.href} onClick={() => setActive(null)}
+                            className="flex items-start gap-3 p-3 rounded-xl transition-all duration-150 hover:-translate-y-px hover:shadow-sm group/card"
+                            style={{
+                              background: isActive ? `${item.color}10` : "transparent",
+                              border: `1px solid ${isActive ? `${item.color}25` : "transparent"}`,
+                            }}
+                            onMouseEnter={e => {
+                              const el = e.currentTarget as HTMLElement;
+                              el.style.background = `${item.color}08`;
+                              el.style.borderColor = `${item.color}20`;
+                            }}
+                            onMouseLeave={e => {
+                              const el = e.currentTarget as HTMLElement;
+                              el.style.background = isActive ? `${item.color}10` : "transparent";
+                              el.style.borderColor = isActive ? `${item.color}25` : "transparent";
+                            }}
                           >
-                            {item.icon}
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-[13.5px] font-semibold text-slate-900">{t(item.labelKey)}</span>
-                              {item.badge && (
-                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wide"
-                                  style={{ background: "linear-gradient(135deg,#6366F1,#8B5CF6)", color: "#fff" }}>
-                                  {item.badge}
-                                </span>
-                              )}
+                            <div className="w-9 h-9 rounded-lg flex items-center justify-center text-[17px] flex-shrink-0 transition-transform group-hover/card:scale-110"
+                              style={{ background: `${item.color}14`, border: `1px solid ${item.color}22` }}>
+                              {item.icon}
                             </div>
-                            <div className="text-[11.5px] text-slate-400 mt-0.5 leading-snug">{t(item.descKey)}</div>
-                          </div>
-                        </Link>
-                      );
-                    })}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
+                                <span className="text-[13px] font-bold text-slate-800 group-hover/card:text-indigo-700 transition-colors leading-tight">
+                                  {item.title}
+                                </span>
+                                {item.badge && (
+                                  <span className="text-[8px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-wider leading-none shrink-0"
+                                    style={{ background: "linear-gradient(135deg,#6366F1,#8B5CF6)", color: "#fff" }}>
+                                    {item.badge}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[11px] text-slate-400 leading-snug">{item.desc}</p>
+                            </div>
+                          </Link>
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
               </div>
             ))}
 
-            {/* ── Direct flat links ─────────────────────────────── */}
-            <div className="flex items-center gap-0.5 ml-1 pl-2 border-l border-slate-100">
-              {DIRECT_LINKS.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={`px-3 py-1.5 rounded-lg text-[13.5px] font-medium flex items-center gap-1.5 transition-all ${
+            {/* Direct links */}
+            <div className="flex items-center gap-0.5 ml-1.5 pl-2 border-l border-slate-200">
+              {DIRECT.map(link => (
+                <Link key={link.href} href={link.href}
+                  className={`px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-1.5 transition-all duration-150 ${
                     pathname?.startsWith(link.href)
-                      ? "text-indigo-600 bg-indigo-50"
+                      ? "text-indigo-700 bg-indigo-50"
                       : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
-                  }`}
-                >
-                  <span className="text-xs">{link.icon}</span>
-                  {t(link.labelKey)}
+                  }`}>
+                  <span>{link.icon}</span> {link.label}
                 </Link>
               ))}
             </div>
           </nav>
 
-          {/* ── Right actions ─────────────────────────────────────── */}
+          {/* ── Right actions ── */}
           <div className="flex items-center gap-2">
-
-            {/* Language toggle — desktop only */}
-            <button
-              onClick={toggleLanguage}
-              className="hidden md:flex px-2.5 py-1.5 text-[12px] font-bold rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-all items-center gap-1.5"
-            >
-              🌐 {t('languageName')}
+            <button onClick={toggleLang}
+              className="hidden md:flex items-center gap-1.5 px-3 py-2 text-sm font-semibold rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition-all">
+              🌐 {locale === "en" ? "اردو" : "English"}
             </button>
 
-            {/* Primary CTA — "Sell Your EV" — visible on ≥md */}
-            <Link
-              href="/listings/post"
-              className="hidden md:inline-flex items-center gap-1.5 px-4 py-2 text-[13px] font-bold rounded-xl text-white transition-all hover:opacity-90 shadow-sm shadow-indigo-200"
-              style={{ background: "linear-gradient(135deg,#6366F1,#8B5CF6)" }}
-            >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <Link href="/listings/post"
+              className="hidden lg:inline-flex items-center gap-2 px-5 py-2.5 text-[13px] font-black rounded-xl text-white transition-all hover:opacity-90 hover:shadow-lg hover:-translate-y-px"
+              style={{ background: "linear-gradient(135deg,#6366F1,#8B5CF6)", boxShadow: "0 4px 14px rgba(99,102,241,0.3)" }}>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
               </svg>
-              {t('sellYourEv')}
+              List Your EV
             </Link>
 
-            {/* Auth */}
             {status === "authenticated" ? (
               <div className="flex items-center gap-2">
-                <Link
-                  href="/dashboard"
-                  className="w-9 h-9 rounded-full border border-indigo-100 flex items-center justify-center bg-white shadow-sm hover:border-indigo-300 transition-all overflow-hidden"
-                  title="Dashboard"
-                >
-                  {session?.user?.image ? (
-                    <img src={session.user.image} alt="User" className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="text-xs font-bold text-indigo-600">{session?.user?.name?.[0]?.toUpperCase()}</span>
-                  )}
+                <Link href="/dashboard" className="w-9 h-9 rounded-full border-2 border-indigo-100 flex items-center justify-center bg-white hover:border-indigo-300 transition-all overflow-hidden hover:scale-105">
+                  {session?.user?.image
+                    ? <img src={session.user.image} alt="" className="w-full h-full object-cover" />
+                    : <span className="text-sm font-black text-indigo-600">{session?.user?.name?.[0]?.toUpperCase()}</span>
+                  }
                 </Link>
-                <button
-                  onClick={() => signOut()}
-                  className="hidden sm:flex text-[12px] font-semibold text-slate-500 hover:text-slate-900 px-2 py-1 rounded-lg hover:bg-slate-50 transition-all"
-                >
-                  {t('signOut')}
+                <button onClick={() => signOut()}
+                  className="hidden md:block text-sm font-semibold text-slate-500 hover:text-slate-800 px-3 py-2 rounded-xl hover:bg-slate-50 transition-all">
+                  Sign Out
                 </button>
               </div>
             ) : (
-              <button
-                onClick={() => signIn()}
-                className="inline-flex items-center px-3 py-2 text-[13px] font-semibold rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 transition-all"
-              >
-                {t('signIn')}
+              <button onClick={() => signIn()}
+                className="hidden md:inline-flex items-center px-4 py-2 text-sm font-semibold rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all">
+                Log In
               </button>
             )}
 
-            {/* Mobile hamburger */}
-            <button
-              className="md:hidden p-1.5 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 transition-all"
-              onClick={() => setMobileOpen(!mobileOpen)}
-            >
-              {mobileOpen ? (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              ) : (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-              )}
+            <button onClick={() => setMobileOpen(!mobileOpen)}
+              className="lg:hidden p-2.5 rounded-xl text-slate-600 hover:bg-slate-50 transition-all">
+              {mobileOpen
+                ? <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12"/></svg>
+                : <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6h16M4 12h16M4 18h16"/></svg>
+              }
             </button>
           </div>
         </div>
 
-        {/* ── Mobile menu ────────────────────────────────────────── */}
+        {/* ── Mobile menu ── */}
         {mobileOpen && (
-          <div className="md:hidden pb-4 border-t border-[#E6E9F2] mt-1">
+          <div className="lg:hidden border-t border-slate-100 mt-3 pt-4 pb-6 space-y-1">
+            <Link href="/listings/post" onClick={() => setMobileOpen(false)}
+              className="flex items-center justify-center gap-2 w-full py-3.5 rounded-2xl text-sm font-black text-white mb-4"
+              style={{ background: "linear-gradient(135deg,#6366F1,#8B5CF6)" }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/></svg>
+              List Your EV — Free
+            </Link>
 
-            {/* Mobile CTA */}
-            <div className="px-3 pt-3 pb-1">
-              <Link
-                href="/listings/post"
-                onClick={() => setMobileOpen(false)}
-                className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-sm font-bold text-white"
-                style={{ background: "linear-gradient(135deg,#6366F1,#8B5CF6)" }}
-              >
-                + {t('sellYourEv')}
-              </Link>
-            </div>
-
-            {/* Dropdown groups */}
-            {GROUPS.map((group) => (
+            {GROUPS.map(group => (
               <div key={group.id}>
-                <button
-                  className="w-full flex items-center justify-between px-3 py-2.5 text-xs font-bold text-slate-400 uppercase tracking-widest hover:text-indigo-600 transition-colors"
-                  onClick={() => setMobileExpanded(mobileExpanded === group.id ? null : group.id)}
-                >
-                  {t(group.labelKey)}
-                  <svg
-                    className={`w-3.5 h-3.5 transition-transform ${mobileExpanded === group.id ? "rotate-180" : ""}`}
-                    fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                <button onClick={() => setMobileExp(mobileExp === group.id ? null : group.id)}
+                  className="w-full flex items-center justify-between px-3 py-3 text-xs font-black uppercase tracking-[0.15em] text-slate-400 rounded-xl hover:bg-slate-50 transition-all">
+                  {group.label}
+                  <svg className={`w-4 h-4 transition-transform duration-200 ${mobileExp === group.id ? "rotate-180" : ""}`}
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7"/>
                   </svg>
                 </button>
-
-                {mobileExpanded === group.id && (
-                  <div className="ml-2 space-y-0.5 mb-1">
-                    {group.items.map((item) => (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        onClick={() => setMobileOpen(false)}
-                        className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-all"
-                        style={{
-                          background: pathname?.startsWith(item.href) ? `${item.color}12` : "transparent",
-                          color: pathname?.startsWith(item.href) ? item.color : "#475569",
-                        }}
-                      >
-                        <span>{item.icon}</span>
-                        <span className="font-medium">{t(item.labelKey)}</span>
+                {mobileExp === group.id && (
+                  <div className="space-y-0.5 pl-2 pb-2">
+                    {(group.items as readonly GroupItem[]).map(item => (
+                      <Link key={item.href} href={item.href} onClick={() => setMobileOpen(false)}
+                        className="flex items-center gap-3 px-3 py-3 rounded-xl transition-all"
+                        style={{ color: pathname?.startsWith(item.href) ? item.color : "#475569" }}>
+                        <div className="w-9 h-9 rounded-lg flex items-center justify-center text-lg flex-shrink-0"
+                          style={{ background: `${item.color}12` }}>{item.icon}</div>
+                        <div className="flex-1">
+                          <div className="text-[13px] font-bold">{item.title}</div>
+                          <div className="text-[11px] text-slate-400 mt-0.5">{item.desc}</div>
+                        </div>
                         {item.badge && (
-                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase"
-                            style={{ background: "linear-gradient(135deg,#6366F1,#8B5CF6)", color: "#fff" }}>
-                            {item.badge}
-                          </span>
+                          <span className="text-[8px] font-black px-1.5 py-0.5 rounded-full uppercase"
+                            style={{ background: "linear-gradient(135deg,#6366F1,#8B5CF6)", color: "#fff" }}>{item.badge}</span>
                         )}
                       </Link>
                     ))}
@@ -337,37 +285,37 @@ export default function NavBar() {
               </div>
             ))}
 
-            {/* Direct links in mobile */}
-            <div className="border-t border-[#E6E9F2] mt-1 pt-1 space-y-0.5">
-              {DIRECT_LINKS.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => setMobileOpen(false)}
-                  className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all mx-1"
-                  style={{
-                    color: pathname?.startsWith(link.href) ? "#6366F1" : "#475569",
-                    background: pathname?.startsWith(link.href) ? "#6366F115" : "transparent",
-                  }}
-                >
-                  <span>{link.icon}</span>
-                  {t(link.labelKey)}
+            <div className="border-t border-slate-100 pt-3 space-y-0.5">
+              {DIRECT.map(link => (
+                <Link key={link.href} href={link.href} onClick={() => setMobileOpen(false)}
+                  className="flex items-center gap-3 px-3 py-3 rounded-xl text-[13px] font-semibold text-slate-700 hover:bg-slate-50 transition-all">
+                  <div className="w-9 h-9 rounded-lg bg-slate-50 flex items-center justify-center text-lg">{link.icon}</div>
+                  {link.label}
                 </Link>
               ))}
-            </div>
-
-            {/* Language toggle in mobile */}
-            <div className="px-3 pt-3">
-              <button
-                onClick={() => { toggleLanguage(); setMobileOpen(false); }}
-                className="w-full py-2 text-[12px] font-bold rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-all flex items-center justify-center gap-1.5"
-              >
-                🌐 {t('languageName')}
+              <button onClick={() => { toggleLang(); setMobileOpen(false); }}
+                className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-[13px] font-semibold text-slate-700 hover:bg-slate-50 transition-all">
+                <div className="w-9 h-9 rounded-lg bg-slate-50 flex items-center justify-center text-lg">🌐</div>
+                {locale === "en" ? "Switch to اردو" : "Switch to English"}
               </button>
+              {status !== "authenticated" && (
+                <button onClick={() => { signIn(); setMobileOpen(false); }}
+                  className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-[13px] font-bold text-indigo-600 hover:bg-indigo-50 transition-all">
+                  <div className="w-9 h-9 rounded-lg bg-indigo-50 flex items-center justify-center text-lg">👤</div>
+                  Log In
+                </button>
+              )}
             </div>
           </div>
         )}
       </div>
+
+      <style>{`
+        @keyframes dropIn {
+          from { opacity: 0; transform: translateX(-50%) translateY(-6px); }
+          to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+      `}</style>
     </header>
   );
 }

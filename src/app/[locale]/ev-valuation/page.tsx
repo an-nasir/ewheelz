@@ -25,18 +25,27 @@ export default async function EvValuationPage() {
   return (
     <div className="bg-[#F6F8FF] min-h-screen">
 
-      {/* Hero */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-14 pb-8 text-center">
-        <div className="inline-flex items-center gap-2 bg-purple-50 border border-purple-200 rounded-full px-4 py-2 text-sm font-bold text-purple-700 mb-5">
-          💰 Free — real PKR numbers
+      {/* Dark image hero */}
+      <div style={{
+        backgroundImage: "url(https://images.unsplash.com/photo-1560958089-b8a1929cea89?w=1400&q=80)",
+        backgroundSize: "cover", backgroundPosition: "center 35%", position: "relative",
+      }}>
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(105deg,rgba(9,11,30,0.97) 0%,rgba(30,27,75,0.93) 50%,rgba(15,23,42,0.6) 100%)" }} />
+        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 py-14 text-center">
+          <div className="inline-flex items-center gap-2 mb-5 px-3 py-1.5 rounded-full text-xs font-black uppercase tracking-widest"
+            style={{ background: "rgba(167,139,250,0.15)", color: "#C4B5FD", border: "1px solid rgba(167,139,250,0.3)" }}>
+            💰 Free — real PKR numbers
+          </div>
+          <h1 className="text-4xl sm:text-5xl font-black text-white leading-tight mb-3">
+            What&apos;s your EV<br />
+            <span style={{ background: "linear-gradient(90deg,#A78BFA,#60A5FA)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
+              actually worth?
+            </span>
+          </h1>
+          <p className="text-slate-400 text-base max-w-md mx-auto">
+            Dealers lowball. PakWheels has no EV data. Get the real PKR range in 30 seconds.
+          </p>
         </div>
-        <h1 className="text-4xl sm:text-5xl font-black text-slate-900 leading-tight mb-3">
-          What&apos;s your EV<br />
-          <span className="text-purple-600">actually worth?</span>
-        </h1>
-        <p className="text-slate-500 text-base max-w-md mx-auto">
-          Dealers lowball. PakWheels has no EV data. Get the real PKR range in 30 seconds.
-        </p>
       </div>
 
       {/* 2-col desktop layout */}

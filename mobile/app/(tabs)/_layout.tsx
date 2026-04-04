@@ -12,11 +12,11 @@ const TABS: Array<{
   icon: IconName;
   iconActive: IconName;
 }> = [
-  { name: "index",     title: "Home",      icon: "home-outline",      iconActive: "home" },
-  { name: "evs",       title: "EVs",       icon: "car-outline",       iconActive: "car" },
-  { name: "charging",  title: "Chargers",  icon: "flash-outline",     iconActive: "flash" },
-  { name: "articles",  title: "News",      icon: "newspaper-outline", iconActive: "newspaper" },
-  { name: "community", title: "Community", icon: "people-outline",    iconActive: "people" },
+  { name: "index",    title: "Home",     icon: "home-outline",      iconActive: "home" },
+  { name: "listings", title: "Buy/Sell", icon: "pricetag-outline",  iconActive: "pricetag" },
+  { name: "evs",      title: "EVs",      icon: "car-outline",       iconActive: "car" },
+  { name: "charging", title: "Chargers", icon: "flash-outline",     iconActive: "flash" },
+  { name: "articles", title: "News",     icon: "newspaper-outline", iconActive: "newspaper" },
 ];
 
 export default function TabLayout() {

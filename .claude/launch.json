@@ -3,14 +3,15 @@
   "configurations": [
     {
       "name": "Next.js Dev Server",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
-      "port": 3000
+      "runtimeExecutable": "/usr/local/bin/node",
+      "runtimeArgs": ["node_modules/.bin/next", "dev"],
+      "port": 3000,
+      "autoPort": true
     },
     {
       "name": "Prisma Studio",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "db:studio"],
+      "runtimeExecutable": "/usr/local/bin/node",
+      "runtimeArgs": ["node_modules/.bin/prisma", "studio"],
       "port": 5555
     }
   ]

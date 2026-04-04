@@ -1,127 +1,47 @@
-# Claude AI Engineering Guide
 
-You are the AI engineer responsible for building this EV marketplace.
+# eWheelz — AI Operating System
 
-Goal:
-Build an MVP similar to PakWheels but focused on electric vehicles, batteries and charging infrastructure.
+## Core Mission
 
-Prioritize speed and simplicity.
+Build Pakistan’s #1 EV marketplace.
 
----
+## Priorities
 
-## Tech Stack
+1. Get real EV listings
+2. Increase buyer trust
+3. Drive traffic via SEO
+4. Keep UI modern and alive
+5. Protect data integrity
 
-Frontend
-Next.js
-React
-TypeScript
-TailwindCSS
+## Stack
 
-Backend
-Node.js
-Fastify or Express
+Next.js 14, TypeScript, Tailwind, Prisma, Neon PostgreSQL, NextAuth, Mapbox, PostHog
 
-Database
-PostgreSQL
-Prisma ORM
+## Rules
 
-Search
-Meilisearch
+* No unnecessary features
+* No dark UI
+* No fake data
+* No slow pages
 
-Maps
-Mapbox
+## UX Direction
 
-Hosting
-Vercel
-Railway
-Cloudflare
+JetBrains-level UI:
 
----
+* gradients
+* motion
+* interactive cards
 
-## Core Features
+## Data Safety
 
-EV Listings marketplace  
-EV specification database  
-Battery database  
-Charging station locator  
-Expert reviews  
-EV news and tutorials  
-Price tracking
+* Neon DB (primary)
+* JSON backups
+* export/import APIs
 
----
+## Execution Mode
 
-## Development Workflow
+* ship fast
+* no overthinking
+* focus on listings and growth
 
-When implementing a feature:
-
-1 Read ROADMAP.md  
-2 Check tasks/backlog.md  
-3 Pick next task  
-4 Implement minimal working feature  
-5 Update docs if needed
-
----
-
-## Coding Rules
-
-Use TypeScript everywhere.
-
-File size limit:
-400 lines maximum.
-
-Prefer simple architecture.
-
-Modules should follow:
-
-src/modules/
-
-users  
-listings  
-ev_models  
-batteries  
-reviews  
-charging_stations  
-articles
-
----
-
-## Implementation Order
-
-Always implement features in this order:
-
-1 Database schema
-2 API endpoints
-3 Frontend UI
-4 Search integration
-5 Tests
-
----
-
-## Development Philosophy
-
-Speed over perfection.
-
-Avoid premature optimization.
-
-Use well known libraries.
-
----
-
-## Data Sources
-
-EV specs:
-Manufacturer specs
-Open EV datasets
-
-Charging stations:
-OpenChargeMap API
-
----
-
-## Output Style
-
-When generating code always include:
-
-File path  
-Full code  
-Comments
+Claude must follow all files in .claude/skills/

@@ -1,9 +1,53 @@
-// src/app/articles/page.tsx — Guides & Articles Hub (JetBrains-inspired design)
+// src/app/articles/page.tsx — Guides & Articles Hub + Live EV News Aggregator
 import { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { Article } from "@/types";
 import NewsletterWidget from "@/components/NewsletterWidget";
+
+// ── RSS news fetcher (server-side, cached 1h) ─────────────────────────────────
+const EV_KEYWORDS = ["electric", "EV", "BYD", "Tesla", "MG ZS", "Hyundai", "battery", "charging", "hybrid", "PHEV", "Deepal", "Changan", "Xpeng", "electric car", "electric vehicle"];
+
+function isEVRelated(text: string) {
+  const l = text.toLowerCase();
+  return EV_KEYWORDS.some(k => l.includes(k.toLowerCase()));
+}
+
+function parseItems(xml: string, source: string, flag: string) {
+  const out: { title: string; link: string; pubDate: string; source: string; flag: string; excerpt: string }[] = [];
+  const re = /<item>([\s\S]*?)<\/item>/g;
+  let m;
+  while ((m = re.exec(xml)) !== null) {
+    const b = m[1];
+    const title   = (/<title><!\[CDATA\[([\s\S]*?)\]\]>/.exec(b) ?? /<title>([^<]+)<\/title>/.exec(b))?.[1]?.trim() ?? "";
+    const link    = (/<link>([^<]+)<\/link>/.exec(b) ?? /<guid>([^<]+)<\/guid>/.exec(b))?.[1]?.trim() ?? "";
+    const pubDate = (/<pubDate>([^<]+)<\/pubDate>/.exec(b))?.[1]?.trim() ?? "";
+    const desc    = (/<description><!\[CDATA\[([\s\S]*?)\]\]>/.exec(b) ?? /<description>([\s\S]*?)<\/description>/.exec(b))?.[1] ?? "";
+    const excerpt = desc.replace(/<[^>]+>/g, "").replace(/&[a-z]+;/g, " ").slice(0, 140).trim();
+    if (title && (isEVRelated(title) || isEVRelated(desc))) out.push({ title, link, pubDate, source, flag, excerpt });
+  }
+  return out;
+}
+
+async function fetchLiveNews() {
+  const feeds = [
+    { source: "Dawn",            url: "https://www.dawn.com/feeds/home",            flag: "🇵🇰" },
+    { source: "The News",        url: "https://www.thenews.com.pk/rss/1/7",         flag: "🇵🇰" },
+    { source: "Profit Pakistan", url: "https://profit.pakistantoday.com.pk/feed/",  flag: "🇵🇰" },
+    { source: "Electrek",        url: "https://electrek.co/feed/",                  flag: "🌍" },
+    { source: "InsideEVs",       url: "https://insideevs.com/rss/articles/",        flag: "🌍" },
+  ];
+  const results = await Promise.allSettled(
+    feeds.map(async f => {
+      const r = await fetch(f.url, { next: { revalidate: 3600 }, signal: AbortSignal.timeout(5000), headers: { "User-Agent": "eWheelz/1.0" } });
+      return parseItems(await r.text(), f.source, f.flag);
+    })
+  );
+  return results
+    .flatMap(r => r.status === "fulfilled" ? r.value : [])
+    .sort((a, b) => new Date(b.pubDate || 0).getTime() - new Date(a.pubDate || 0).getTime())
+    .slice(0, 20);
+}
 
 export const metadata: Metadata = {
   title: "EV Guides & Articles",
@@ -121,10 +165,11 @@ function ArticleCard({ article, featured = false }: { article: Article; featured
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function ArticlesPage({ searchParams }: { searchParams: { category?: string } }) {
-  const allArticles = (await prisma.article.findMany({
-    where: { published: true },
-    orderBy: { publishedAt: "desc" },
-  })) as unknown as Article[];
+  const [allArticles, liveNews] = await Promise.all([
+    prisma.article.findMany({ where: { published: true }, orderBy: { publishedAt: "desc" } })
+      .then(r => r as unknown as Article[]),
+    fetchLiveNews().catch(() => [] as { title: string; link: string; pubDate: string; source: string; flag: string; excerpt: string }[]),
+  ]);
 
   const categoryFilter = searchParams.category ?? "";
   const filtered = categoryFilter ? allArticles.filter(a => a.category === categoryFilter) : allArticles;
@@ -135,29 +180,22 @@ export default async function ArticlesPage({ searchParams }: { searchParams: { c
   return (
     <div style={{ background: "#F6F8FF", minHeight: "100vh" }}>
 
-      {/* ── Vivid Gradient Hero ── */}
-      <div style={{ background: "linear-gradient(135deg,#8B5CF6 0%,#6366F1 50%,#3B82F6 100%)" }}>
-        <div style={{ position: "relative", overflow: "hidden" }}>
-          <div style={{
-            position: "absolute", top: "-60px", right: "-60px",
-            width: "300px", height: "300px", borderRadius: "50%",
-            background: "rgba(255,255,255,0.10)", filter: "blur(60px)", pointerEvents: "none",
-          }} />
-          <div style={{
-            position: "absolute", bottom: "-40px", left: "15%",
-            width: "220px", height: "220px", borderRadius: "50%",
-            background: "rgba(255,255,255,0.07)", filter: "blur(50px)", pointerEvents: "none",
-          }} />
-
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 relative z-10">
-            <div className="inline-flex items-center gap-2 mb-4 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider"
-              style={{ background: "rgba(255,255,255,0.20)", color: "#ffffff", border: "1px solid rgba(255,255,255,0.30)" }}>
+      {/* ── Dark image hero ── */}
+      <div style={{
+        backgroundImage: "url(https://images.unsplash.com/photo-1617788138017-80ad40651399?w=1400&q=80)",
+        backgroundSize: "cover", backgroundPosition: "center 40%", position: "relative",
+      }}>
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(105deg,rgba(9,11,30,0.97) 0%,rgba(15,23,42,0.90) 55%,rgba(15,23,42,0.5) 100%)" }} />
+        <div>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-14 relative z-10">
+            <div className="inline-flex items-center gap-2 mb-4 px-3 py-1.5 rounded-full text-xs font-black uppercase tracking-widest"
+              style={{ background: "rgba(99,102,241,0.18)", color: "#A5B4FC", border: "1px solid rgba(99,102,241,0.35)" }}>
               📖 EV Knowledge Hub
             </div>
             <h1 className="text-4xl sm:text-5xl font-black text-white mb-3 leading-tight">
               EV Guides &amp; Articles
             </h1>
-            <p className="text-indigo-100 text-lg mb-6 max-w-xl">
+            <p className="text-slate-400 text-lg mb-6 max-w-xl">
               Expert analysis, comparisons, and ownership guides for Pakistan EV buyers
             </p>
 
@@ -232,6 +270,43 @@ export default async function ArticlesPage({ searchParams }: { searchParams: { c
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {rest.slice(2).map(a => <ArticleCard key={a.id} article={a} />)}
+            </div>
+          </div>
+        )}
+
+        {/* ── Live EV News Stream ── */}
+        {liveNews.length > 0 && (
+          <div className="mb-8">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+              <span className="text-xs font-black text-slate-600 uppercase tracking-widest">Live EV News</span>
+              <span className="text-xs text-slate-400">— auto-updated from Dawn, Electrek, InsideEVs &amp; more</span>
+            </div>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {liveNews.map((item, i) => (
+                <a key={i} href={item.link} target="_blank" rel="noopener noreferrer"
+                  className="group rounded-xl p-4 flex flex-col gap-2 hover:shadow-md transition-all"
+                  style={{ background: "#fff", border: "1px solid #E6E9F2" }}>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs">{item.flag}</span>
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">{item.source}</span>
+                    {item.pubDate && (
+                      <span className="ml-auto text-[10px] text-slate-300">
+                        {new Date(item.pubDate).toLocaleDateString("en-PK", { month: "short", day: "numeric" })}
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-sm font-bold text-slate-900 leading-snug group-hover:text-indigo-600 transition-colors line-clamp-2">
+                    {item.title}
+                  </div>
+                  {item.excerpt && (
+                    <div className="text-xs text-slate-400 leading-relaxed line-clamp-2">{item.excerpt}</div>
+                  )}
+                  <div className="text-xs font-bold text-indigo-500 mt-auto opacity-0 group-hover:opacity-100 transition-opacity">
+                    Read on {item.source} →
+                  </div>
+                </a>
+              ))}
             </div>
           </div>
         )}

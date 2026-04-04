@@ -61,14 +61,23 @@ export default function BatteryHealthClient() {
   const [dcFreq, setDcFreq]        = useState<"never"|"occasionally"|"regularly"|"daily">("occasionally");
   const [symptoms, setSymptoms]    = useState(false);
 
+  // Validation constants
+  const ODOMETER_MAX = 500000;
+  const RANGE_MIN = 100;
+  const RANGE_MAX = 1000;
+
+  // Validation errors
+  const odometerError = odometer < 0 || odometer > ODOMETER_MAX;
+  const originalRangeError = originalRange > 0 && (originalRange < RANGE_MIN || originalRange > RANGE_MAX);
+  const currentRangeError = currentRange > 0 && (currentRange < 0 || currentRange > RANGE_MAX);
   const rangeError = currentRange > 0 && originalRange > 0 && currentRange > originalRange;
 
   // Live grade preview — updates as user types
   const liveGrade = useMemo(() => {
-    if (!originalRange || !currentRange || rangeError) return null;
+    if (!originalRange || !currentRange || rangeError || originalRangeError || currentRangeError) return null;
     const pct = Math.min(100, Math.round((currentRange / originalRange) * 100));
     return { pct, grade: scoreToGrade(pct) };
-  }, [originalRange, currentRange, rangeError]);
+  }, [originalRange, currentRange, rangeError, originalRangeError, currentRangeError]);
 
   async function submit() {
     setLoading(true);
@@ -96,7 +105,7 @@ export default function BatteryHealthClient() {
     setLeadDone(true);
   }
 
-  const canSubmit = evName.trim() && year && originalRange > 0 && currentRange > 0 && !rangeError;
+  const canSubmit = evName.trim() && year && originalRange > 0 && currentRange > 0 && !rangeError && !odometerError && !originalRangeError && !currentRangeError;
 
   // ── REPORT ─────────────────────────────────────────────────────────────────
   if (report) {
@@ -190,7 +199,7 @@ export default function BatteryHealthClient() {
 
   // ── FORM ───────────────────────────────────────────────────────────────────
   return (
-    <div className="bg-white rounded-3xl border border-[#E6E9F2] shadow-sm p-7 space-y-8">
+    <div className="rounded-3xl border border-[#E6E9F2] shadow-sm p-7 space-y-8 pt-8" style={{ background: "linear-gradient(135deg,#F5F3FF 0%,#FAFBFF 100%)" }}>
 
       {/* Live grade preview */}
       {liveGrade && (
@@ -227,9 +236,13 @@ export default function BatteryHealthClient() {
         <div>
           <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-3">Km on clock</label>
           <input type="number" value={odometer || ""} onChange={e => setOdometer(Number(e.target.value))}
+            min="0" max={ODOMETER_MAX}
             placeholder="52000"
-            className="w-full border-b-2 border-slate-200 pb-3 text-slate-900 text-2xl font-bold placeholder-slate-300 focus:outline-none focus:border-indigo-500 transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            className={`w-full border-b-2 pb-3 text-slate-900 text-2xl font-bold placeholder-slate-300 focus:outline-none transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${odometerError ? "border-red-400 focus:border-red-500" : "border-slate-200 focus:border-indigo-500"}`}
             style={{ background: "transparent", colorScheme: "light" }} />
+          {odometerError && (
+            <p className="text-red-500 text-xs mt-2">Odometer must be between 0 and {ODOMETER_MAX.toLocaleString()} km.</p>
+          )}
         </div>
       </div>
 
@@ -241,19 +254,27 @@ export default function BatteryHealthClient() {
           <div>
             <div className="text-xs text-slate-500 font-semibold mb-2">When bought</div>
             <input type="number" value={originalRange || ""} onChange={e => setOrig(Number(e.target.value))}
+              min={RANGE_MIN} max={RANGE_MAX}
               placeholder="420"
-              className="w-full border-b-2 border-slate-200 pb-3 text-slate-900 text-2xl font-bold placeholder-slate-300 focus:outline-none focus:border-indigo-500 transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              className={`w-full border-b-2 pb-3 text-slate-900 text-2xl font-bold placeholder-slate-300 focus:outline-none transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${originalRangeError ? "border-red-400 focus:border-red-500" : "border-slate-200 focus:border-indigo-500"}`}
               style={{ background: "transparent", colorScheme: "light" }} />
+            {originalRangeError && (
+              <p className="text-red-500 text-xs mt-2">Original range must be between {RANGE_MIN} and {RANGE_MAX} km.</p>
+            )}
           </div>
           <div>
             <div className="text-xs text-slate-500 font-semibold mb-2">Today (full charge)</div>
             <input type="number" value={currentRange || ""} onChange={e => setCurrent(Number(e.target.value))}
+              min="0" max={RANGE_MAX}
               placeholder="365"
-              className={`w-full border-b-2 pb-3 text-slate-900 text-2xl font-bold placeholder-slate-300 focus:outline-none transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${rangeError ? "border-red-400 focus:border-red-500" : "border-slate-200 focus:border-indigo-500"}`}
+              className={`w-full border-b-2 pb-3 text-slate-900 text-2xl font-bold placeholder-slate-300 focus:outline-none transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${rangeError || currentRangeError ? "border-red-400 focus:border-red-500" : "border-slate-200 focus:border-indigo-500"}`}
               style={{ background: "transparent", colorScheme: "light" }} />
           </div>
         </div>
-        {rangeError && (
+        {currentRangeError && (
+          <p className="text-red-500 text-xs mt-2">Current range must be between 0 and {RANGE_MAX} km.</p>
+        )}
+        {rangeError && !currentRangeError && (
           <p className="text-red-500 text-xs mt-2">Current range can&apos;t be more than original — a battery only degrades, not improves.</p>
         )}
       </div>

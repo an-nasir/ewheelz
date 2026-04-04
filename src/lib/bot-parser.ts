@@ -12,6 +12,10 @@ export interface ParsedQuery {
   dealerPrice: number | null;   // PKR — if user mentions dealer asking price
   originalRange: number | null; // km — if user provides
   currentRange: number | null;  // km — if user provides
+  batteryHealth: string | null; // Grade A-F
+  condition: "NEW" | "USED" | null;
+  contactPhone: string | null;  // for auto-listing intent detection
+  isListingIntent: boolean;     // true if message looks like a dealer ad
 }
 
 const BRANDS: Record<string, string[]> = {
@@ -27,6 +31,16 @@ const BRANDS: Record<string, string[]> = {
   "Honri":    ["honri"],
   "ORA":      ["ora"],
   "Jaecoo":   ["jaecoo"],
+  "Kia":      ["kia"],
+  "Toyota":   ["toyota"],
+  "Proton":   ["proton"],
+  "Volvo":    ["volvo"],
+  "Audi":     ["audi"],
+  "Porsche":  ["porsche"],
+  "BMW":      ["bmw"],
+  "Mercedes": ["mercedes", "benz"],
+  "Nissan":   ["nissan", "leaf"],
+  "Honda":    ["honda"],
 };
 
 const CITIES = [
@@ -44,6 +58,14 @@ const MODEL_KEYWORDS: Record<string, string[]> = {
   "Chery":   ["omoda e5", "omoda"],
   "Deepal":  ["s07", "l07"],
   "Hyundai": ["ioniq 5", "ioniq 6", "ioniq"],
+  "Kia":     ["ev6", "ev9", "niro"],
+  "Toyota":  ["bz4x"],
+  "Proton":  ["x50", "x70"],
+  "Volvo":   ["xc40", "ex30", "ex90"],
+  "Audi":    ["e-tron", "gt"],
+  "BMW":     ["i4", "i7", "ix", "ix3"],
+  "Mercedes": ["eqs", "eqe", "eqc", "eqb"],
+  "Nissan":   ["leaf", "ariya"],
 };
 
 export function parseMessage(text: string): ParsedQuery {
@@ -88,7 +110,7 @@ export function parseMessage(text: string): ParsedQuery {
   // "dealer asking 8.5M" | "asking 85 lac" | "price 8500000"
   let dealerPrice: number | null = null;
   const dealerMatch = t.match(
-    /(?:dealer|asking|price|maang\s*raha|maangraha|listed)[^\d]*([\d.,]+)\s*(m\b|million|crore|lac[kh]?)/i
+    /(?:dealer|asking|price|maang\s*raha|maangraha|listed)[^\d]*([\d.,]+)\s*(m\b|million|mil\b|crore|lac[kh]?)/i
   );
   if (dealerMatch) {
     dealerPrice = parsePkr(dealerMatch[1], dealerMatch[2]);
@@ -103,6 +125,36 @@ export function parseMessage(text: string): ParsedQuery {
   if (origMatch) originalRange = parseInt(origMatch[1]);
   if (currMatch) currentRange  = parseInt(currMatch[1]);
 
+  // ── Battery Health (Grade A-F) ─────────────────────────────────────────────
+  // "grade A" | "health B" | "battery A" | "battery health A"
+  let batteryHealth: string | null = null;
+  const healthMatch = t.match(/(?:grade|health|battery|soh)\s*:?\s*([a-f])\b/i);
+  if (healthMatch) {
+    batteryHealth = healthMatch[1].toUpperCase();
+  }
+
+  // ── Condition ──────────────────────────────────────────────────────────────
+  // "new" | "zero meter" | "unused" | "used" | "pre-owned"
+  let condition: "NEW" | "USED" | null = null;
+  if (/\b(?:new|zero\s*meter|unused|brand\s*new)\b/i.test(t)) {
+    condition = "NEW";
+  } else if (/\b(?:used|pre-owned|second\s*hand)\b/i.test(t)) {
+    condition = "USED";
+  }
+
+  // ── Contact phone ──────────────────────────────────────────────────────────
+  // 03xx-xxxxxxx | 03xxxxxxxxxx | +923xxxxxxxxx
+  let contactPhone: string | null = null;
+  const phoneMatch = t.match(/(?:\+92|0)3\d{2}[\s-]?\d{7,8}/);
+  if (phoneMatch) {
+    contactPhone = phoneMatch[0].replace(/[\s-]/g, "");
+    // Normalise to +92 format
+    if (contactPhone.startsWith("0")) contactPhone = "+92" + contactPhone.slice(1);
+  }
+
+  // ── Listing intent: has brand + price + phone = dealer posting an ad ────────
+  const isListingIntent = !!(brand && dealerPrice && contactPhone);
+
   return {
     rawText: text,
     brand,
@@ -113,13 +165,17 @@ export function parseMessage(text: string): ParsedQuery {
     dealerPrice,
     originalRange,
     currentRange,
+    batteryHealth,
+    condition,
+    contactPhone,
+    isListingIntent,
   };
 }
 
 function parsePkr(numStr: string, unit: string): number {
   const n = parseFloat(numStr.replace(/,/g, ""));
   const u = unit.toLowerCase();
-  if (u.startsWith("m") || u === "million") return Math.round(n * 1_000_000);
+  if (u.startsWith("m") || u === "million" || u === "mil") return Math.round(n * 1_000_000);
   if (u === "crore")                         return Math.round(n * 10_000_000);
   if (u.startsWith("lac") || u.startsWith("lak")) return Math.round(n * 100_000);
   return Math.round(n);

@@ -1,21 +1,31 @@
 // src/app/api/listings/[id]/sold/route.ts
-// Marks a listing as sold + records final sale price for valuation model training
+// PATCH — marks a listing as sold. Requires the sellerToken issued at create time.
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
-  const { soldPrice } = await req.json();
+  const { soldPrice, sellerToken } = await req.json();
+
+  if (!sellerToken) {
+    return NextResponse.json({ error: "Missing seller token" }, { status: 401 });
+  }
+
+  const listing = await prisma.listing.findUnique({ where: { id: params.id } });
+
+  if (!listing) {
+    return NextResponse.json({ error: "Listing not found" }, { status: 404 });
+  }
+
+  if (listing.sellerToken !== sellerToken) {
+    return NextResponse.json({ error: "Invalid seller token" }, { status: 403 });
+  }
 
   await prisma.listing.update({
     where: { id: params.id },
     data: {
       status: "SOLD",
-      // Store sold price in description suffix so the valuation model can learn from it
-      // (avoids schema change — replace with a proper soldPrice column when schema allows)
-      description: soldPrice
-        ? `[SOLD:${soldPrice}]`
-        : undefined,
+      description: soldPrice ? `[SOLD:${soldPrice}]` : listing.description,
     } as any,
   });
 

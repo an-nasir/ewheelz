@@ -20,22 +20,31 @@ export default function BatteryHealthPage() {
   return (
     <div className="bg-[#F6F8FF] min-h-screen">
 
-      {/* Hero */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-14 pb-8 text-center">
-        <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-full px-4 py-2 text-sm font-bold text-emerald-700 mb-5">
-          🔋 Free — takes 60 seconds
+      {/* Dark image hero */}
+      <div style={{
+        backgroundImage: "url(https://images.unsplash.com/photo-1593941707882-a5bba14938c7?w=1400&q=80)",
+        backgroundSize: "cover", backgroundPosition: "center 40%", position: "relative",
+      }}>
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(105deg,rgba(9,11,30,0.97) 0%,rgba(15,23,42,0.92) 50%,rgba(15,23,42,0.6) 100%)" }} />
+        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 py-14 text-center">
+          <div className="inline-flex items-center gap-2 mb-5 px-3 py-1.5 rounded-full text-xs font-black uppercase tracking-widest"
+            style={{ background: "rgba(34,197,94,0.15)", color: "#4ADE80", border: "1px solid rgba(34,197,94,0.3)" }}>
+            🔋 Free — takes 60 seconds
+          </div>
+          <h1 className="text-4xl sm:text-5xl font-black text-white leading-tight mb-3">
+            Is this battery<br />
+            <span style={{ background: "linear-gradient(90deg,#34D399,#60A5FA)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
+              actually healthy?
+            </span>
+          </h1>
+          <p className="text-slate-400 text-base max-w-md mx-auto">
+            Fill in what you know. Get a grade. Know before you buy or sell.
+          </p>
         </div>
-        <h1 className="text-4xl sm:text-5xl font-black text-slate-900 leading-tight mb-3">
-          Is this battery<br />
-          <span className="text-emerald-600">actually healthy?</span>
-        </h1>
-        <p className="text-slate-500 text-base max-w-md mx-auto">
-          Fill in what you know. Get a grade. Know before you buy or sell.
-        </p>
       </div>
 
       {/* 2-col desktop layout */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 pb-20 grid lg:grid-cols-[1fr_320px] gap-6 items-start">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-10 pb-20 grid lg:grid-cols-[1fr_320px] gap-6 items-start">
 
         {/* Left: form */}
         <Suspense>

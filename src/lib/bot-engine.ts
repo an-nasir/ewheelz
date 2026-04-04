@@ -128,9 +128,52 @@ function batterySection(q: ParsedQuery, evSlug: string | null) {
   );
 }
 
+// ── Auto-create listing from WhatsApp ad ─────────────────────────────────────
+const GRADE_TO_HEALTH: Record<string, number> = { A: 95, B: 83, C: 70, D: 56, F: 40 };
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "https://ewheelz.pk";
+
+async function autoCreateListing(q: ParsedQuery): Promise<string> {
+  const { randomBytes } = await import("crypto");
+  const sellerToken = randomBytes(20).toString("hex");
+  const evName = `${q.brand} ${q.model ?? ""}`.trim();
+
+  const listing = await prisma.listing.create({
+    data: {
+      evName,
+      price: q.dealerPrice!,
+      year: q.year ?? new Date().getFullYear(),
+      mileage: q.odometer ?? undefined,
+      city: q.city ?? "Pakistan",
+      condition: q.condition ?? "USED",
+      batteryHealth: q.batteryHealth ? (GRADE_TO_HEALTH[q.batteryHealth] ?? null) : null,
+      contactPhone: q.contactPhone,
+      contactWhatsapp: q.contactPhone,
+      status: "ACTIVE",
+      source: "WHATSAPP",
+      sellerToken,
+    } as any,
+  });
+
+  const listingUrl = `${BASE_URL}/en/listings`;
+  const manageUrl  = `${BASE_URL}/en/listings/manage/${listing.id}?token=${sellerToken}`;
+
+  return (
+    `✅ *Your ${evName} is now live on eWheelz!*\n\n` +
+    `🔗 Browse: ${listingUrl}\n\n` +
+    `🔒 *Manage your listing (save this link):*\n${manageUrl}\n\n` +
+    `_Use the manage link to mark as sold or update price._\n` +
+    `Reply with your listing text anytime to post another.`
+  );
+}
+
 // ── Main: generate WhatsApp reply ─────────────────────────────────────────────
 export async function generateReply(text: string): Promise<string> {
   const q = parseMessage(text);
+
+  // ── Listing intent: dealer posting an ad ───────────────────────────────────
+  if (q.isListingIntent) {
+    return autoCreateListing(q);
+  }
 
   // Can't do anything without a brand
   if (!q.brand) {

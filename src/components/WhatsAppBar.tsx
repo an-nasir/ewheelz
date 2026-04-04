@@ -7,7 +7,7 @@
 import { useState, useEffect } from "react";
 import { track } from "@/lib/analytics";
 
-const WA_NUMBER  = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "923001234567";
+const WA_NUMBER  = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "923444196711";
 const WA_MESSAGE = "Hi eWheelz! I'd like to know more about EVs in Pakistan.";
 const WA_URL     = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(WA_MESSAGE)}`;
 

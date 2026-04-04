@@ -57,6 +57,7 @@ import AuthProvider from "@/components/providers/SessionProvider";
 import AnalyticsProvider from "@/components/providers/AnalyticsProvider";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import WhatsAppBar from "@/components/WhatsAppBar";
+import { Analytics } from "@vercel/analytics/react";
 
 export const locales = ['en', 'ur'] as const;
 
@@ -102,7 +103,7 @@ export default async function RootLayout({
             </AnalyticsProvider>
           </AuthProvider>
         </NextIntlClientProvider>
-        {/* GA4 — loads via web worker, zero impact on LCP */}
+        <Analytics />
         {process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (
           <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID} />
         )}

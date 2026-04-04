@@ -11,15 +11,15 @@ Phase 1
 [DONE] Battery database (chemistry comparison: LFP/NMC/Blade)
 [DONE] API endpoints (ev-models, compare, batteries, listings, charging-stations)
 [DONE] Local dev environment (SQLite + dev-server.mjs, fully seeded and running)
-User authentication
-Listings search filters (client-side filtering UI)
-Charging station map (Mapbox integration)
-Articles system
+[DONE] User authentication
+[DONE] Listings search filters (client-side filtering UI)
+[DONE] Charging station map (Leaflet integration)
+[DONE] Articles system
+[DONE] EV cost calculator (petrol vs EV)
 
 Phase 2
 
-Price tracking
-EV cost calculator (petrol vs EV)
+[IN_PROGRESS] Price tracking
 Saved searches
 Email alerts
 Solar charging guide

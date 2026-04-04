@@ -1,7 +1,6 @@
-// src/app/robots.ts — robots.txt generation
 import { MetadataRoute } from "next";
 
-const BASE = "https://ewheelz.vercel.app";
+const BASE = process.env.NEXT_PUBLIC_BASE_URL ?? "https://ewheelz.pk";
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -9,10 +8,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        disallow: [
-          "/api/",       // Don't index API routes
-          "/dashboard",  // Private user dashboard
-        ],
+        disallow: ["/api/", "/dashboard", "/listings/manage/", "/listings/post"],
       },
     ],
     sitemap: `${BASE}/sitemap.xml`,

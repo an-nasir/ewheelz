@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 // POST /api/listings — Create listing (auth optional — anonymous allowed)
 
 import { NextRequest, NextResponse } from "next/server";
+import { randomBytes } from "crypto";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(request: NextRequest) {
@@ -73,8 +74,9 @@ export async function POST(request: NextRequest) {
         contactName:     contactName?.trim()      ?? null,
         contactPhone:    String(contactPhone).trim(),
         contactWhatsapp: contactWhatsapp?.trim()  ?? null,
-        status:          "PENDING",
+        status:          "ACTIVE",
         featured:        false,
+        sellerToken:     randomBytes(20).toString("hex"),
       },
     });
 
@@ -96,7 +98,31 @@ export async function POST(request: NextRequest) {
       } catch { /* non-blocking */ }
     }
 
-    return NextResponse.json({ success: true, listingId: listing.id }, { status: 201 });
+    // WhatsApp blast to group/broadcast via WhatsApp Cloud API (non-blocking)
+    if (process.env.WHATSAPP_TOKEN && process.env.WHATSAPP_PHONE_ID) {
+      try {
+        const baseUrl  = process.env.NEXT_PUBLIC_BASE_URL ?? "https://ewheelz.pk";
+        const evLabel  = evName ?? "Electric Vehicle";
+        const priceFmt = `PKR ${(parseInt(String(price)) / 1_000_000).toFixed(1)}M`;
+        const msgBody  = `⚡ New EV Listed on eWheelz!\n\n🚗 *${evLabel}* (${year})\n💰 ${priceFmt}\n📍 ${city}\n\n🔗 ${baseUrl}/en/listings/${listing.id}\n\n_Reply or tap link to contact seller_`;
+
+        await fetch(
+          `https://graph.facebook.com/v18.0/${process.env.WHATSAPP_PHONE_ID}/messages`,
+          {
+            method:  "POST",
+            headers: { Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}`, "Content-Type": "application/json" },
+            body: JSON.stringify({
+              messaging_product: "whatsapp",
+              to:   process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "923444196711",
+              type: "text",
+              text: { body: msgBody },
+            }),
+          }
+        );
+      } catch { /* non-blocking — WA blast failure never breaks listing creation */ }
+    }
+
+    return NextResponse.json({ success: true, listingId: listing.id, sellerToken: listing.sellerToken }, { status: 201 });
   } catch (err) {
     console.error("[listings POST]", err);
     return NextResponse.json({ error: "Failed to create listing", details: String(err) }, { status: 500 });

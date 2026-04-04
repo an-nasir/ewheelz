@@ -1,33 +1,35 @@
 "use client";
-// src/components/providers/AnalyticsProvider.tsx
-// Initialises Mixpanel once, then tracks a "Page View" on every route change.
-// Wrapped in a client component so it has access to usePathname.
+// Analytics: PostHog (events + session recordings) + Vercel Analytics (page views)
+// Set NEXT_PUBLIC_POSTHOG_KEY in env to activate PostHog.
 
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
-import mixpanel from "mixpanel-browser";
+import posthog from "posthog-js";
 
-const TOKEN = process.env.NEXT_PUBLIC_MIXPANEL_TOKEN;
-let initialised = false;
+const PH_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY;
+let ready = false;
 
 export default function AnalyticsProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   useEffect(() => {
-    if (!TOKEN) return; // gracefully skip when token not set in env
-
-    if (!initialised) {
-      mixpanel.init(TOKEN, {
-        track_pageview: false, // we do it manually below
-        persistence: "localStorage",
-        ignore_dnt: false,
+    if (!PH_KEY) return;
+    if (!ready) {
+      posthog.init(PH_KEY, {
+        api_host: "https://app.posthog.com",
+        capture_pageview: false,        // manual below
+        session_recording: { maskAllInputs: false },
       });
-      initialised = true;
+      ready = true;
     }
-
-    // Track every client-side navigation as a Page View
-    mixpanel.track("Page View", { path: pathname });
+    posthog.capture("$pageview", { path: pathname });
   }, [pathname]);
 
   return <>{children}</>;
+}
+
+// ── Event helpers — import and call anywhere ──────────────────────────────────
+export function track(event: string, props?: Record<string, unknown>) {
+  if (typeof window === "undefined") return;
+  try { posthog.capture(event, props); } catch {}
 }

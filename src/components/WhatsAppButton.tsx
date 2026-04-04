@@ -1,6 +1,5 @@
 "use client";
-// src/components/WhatsAppButton.tsx — WhatsApp contact button (Client Component)
-// Needed because listings/page.tsx is a Server Component and can't have onClick
+import { track } from "@/components/providers/AnalyticsProvider";
 
 interface Props {
   brand: string;
@@ -17,7 +16,7 @@ export default function WhatsAppButton({ brand, model, year, price, city }: Prop
       href={`https://wa.me/?text=${encodeURIComponent(msg)}`}
       target="_blank"
       rel="noopener noreferrer"
-      onClick={(e) => e.stopPropagation()}
+      onClick={(e) => { e.stopPropagation(); track("whatsapp_contact", { brand, model, year, price, city }); }}
       className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl transition-all hover:scale-105 active:scale-95"
       style={{ background: "#25D366", color: "#FFFFFF", boxShadow: "0 2px 8px rgba(37,211,102,0.35)" }}
     >

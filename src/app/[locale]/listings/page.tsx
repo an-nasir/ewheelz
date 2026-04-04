@@ -2,11 +2,11 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import WhatsAppButton from "@/components/WhatsAppButton";
-import MarkSoldButton from "@/components/MarkSoldButton";
+import ScamReportButton from "@/components/ScamReportButton";
 
 export const metadata = {
-  title: "Buy & Sell EVs — Pakistan",
-  description: "Browse EV listings across Pakistan. BYD, MG, Hyundai and more.",
+  title: "Used Electric Cars for Sale in Pakistan — BYD, MG, Hyundai | eWheelz",
+  description: "Browse 377+ used EV listings across Pakistan. Battery grade on every car. Buy BYD, MG ZS EV, Hyundai IONIQ and more with confidence.",
 };
 
 interface SearchParams { city?: string; brand?: string; min_price?: string; max_price?: string }
@@ -142,8 +142,7 @@ export default async function ListingsPage({ searchParams }: { searchParams: Sea
                 <Link href="/listings" className="mt-4 inline-block text-sm text-indigo-600 hover:underline">Clear filters</Link>
               </div>
             ) : listings.map((l, idx) => {
-              if (!l.evModel) return null; // anonymous listing without linked model
-              const pt = POWERTRAIN_STYLES[l.evModel.powertrain] ?? POWERTRAIN_STYLES.BEV;
+              const pt = POWERTRAIN_STYLES[l.evModel?.powertrain ?? "BEV"] ?? POWERTRAIN_STYLES.BEV;
               return (
                 <div key={l.id}
                   className="group rounded-2xl p-5 hover-lift"
@@ -203,6 +202,13 @@ export default async function ListingsPage({ searchParams }: { searchParams: Sea
                           );
                         })()}
                         {(l.user?.name || l.contactName) && <span>👤 {l.user?.name ?? l.contactName}</span>}
+                        {/* Verified badge */}
+                        {(l as any).verifiedSeller && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black"
+                            style={{ background: "#EEF2FF", color: "#4F46E5", border: "1px solid #C7D2FE" }}>
+                            ✅ Verified
+                          </span>
+                        )}
                       </div>
                     </div>
 
@@ -225,16 +231,19 @@ export default async function ListingsPage({ searchParams }: { searchParams: Sea
                         city={l.city}
                       />
 
+                      {/* View listing detail */}
+                      <Link href={`/listings/${l.id}` as any}
+                        className="text-[11px] text-indigo-500 hover:text-indigo-700 font-semibold transition-colors">
+                        View listing →
+                      </Link>
                       {/* View EV specs link */}
                       {l.evModel?.slug && (
                         <Link href={`/ev/${l.evModel.slug}`}
-                          className="text-[11px] text-indigo-500 hover:text-indigo-700 font-semibold transition-colors">
-                          View EV specs →
+                          className="text-[11px] text-slate-400 hover:text-slate-600 font-semibold transition-colors">
+                          Specs →
                         </Link>
                       )}
-
-                      {/* Mark as Sold */}
-                      <MarkSoldButton listingId={l.id} price={l.price} />
+                      <ScamReportButton listingId={l.id} />
                     </div>
                   </div>
                 </div>

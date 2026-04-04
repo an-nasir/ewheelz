@@ -1,14 +1,15 @@
 // eWheelz — Pakistan EV Intelligence Platform
-// Local dev: SQLite (node:sqlite via custom shim, no prisma generate needed)
-// Production: switch to provider = "postgresql" + Neon DATABASE_URL
+// Dev: SQLite  → set DATABASE_URL="file:./dev.db" in .env
+// Prod: Neon    → set DATABASE_URL (pooled) + DIRECT_URL (non-pooled) in Vercel env vars
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")   // Neon requires non-pooled URL for migrations
 }
 
 // ─── Users ────────────────────────────────────────────────────────────────────
@@ -106,6 +107,7 @@ model EvModel {
   charging EvCharging[]
   listings Listing[]
   reviews  Review[]
+  priceHistory PriceHistory[]
   savedBy  User[]      @relation("UserSavedEVs")
   affiliateLinks AffiliateLink[] @relation("EvModelAffiliates")
 
@@ -205,7 +207,9 @@ model Listing {
   status          String   @default("PENDING")       // PENDING | ACTIVE | SOLD | EXPIRED
   source          String   @default("MANUAL")        // MANUAL | PAKWHEELS | OLX
   sourceUrl       String?  @unique @map("source_url") // dedup key for scraped listings
+  sellerToken     String?  @map("seller_token")       // secret token for seller-only actions
   featured        Boolean  @default(false)
+  verifiedSeller  Boolean  @default(false) @map("verified_seller") // manually verified by eWheelz team
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
@@ -436,4 +440,37 @@ model AffiliateLink {
 
   @@index([evModelId])
   @@map("affiliate_links")
+}
+
+// ─── Push Subscribers (mobile price alerts) ───────────────────────────────────
+
+model PushSubscriber {
+  id        String   @id @default(cuid())
+  token     String   @unique                    // Expo push token
+  brand     String?                             // e.g. "BYD" — null = any
+  city      String?                             // e.g. "Lahore" — null = any
+  maxPrice  Int?     @map("max_price")          // in PKR — null = any
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([brand])
+  @@index([city])
+  @@map("push_subscribers")
+}
+
+// ─── Price History ────────────────────────────────────────────────────────────
+
+model PriceHistory {
+  id        String   @id @default(cuid())
+  evModelId String   @map("ev_model_id")
+  pricePkr  Int      @map("price_pkr")
+  currency  String   @default("PKR")
+  source    String?  // e.g., "MANUFACTURER", "PAKWHEELS"
+  createdAt DateTime @default(now()) @map("created_at")
+
+  evModel EvModel @relation(fields: [evModelId], references: [id], onDelete: Cascade)
+
+  @@index([evModelId])
+  @@index([createdAt])
+  @@map("price_history")
 }
