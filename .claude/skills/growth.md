@@ -58,14 +58,29 @@ Targets:
 
 ### 3. Scraping (Cold Start Only)
 
-Sources:
-- PakWheels
-- OLX Pakistan
+**Sources:**
+- PakWheels (JSON-LD + gallery images working ✅ 2026-04-08)
+- OLX Pakistan (TODO)
 
-Rules:
-- Use for seeding ONLY
-- Must attach `source` + `sourceUrl`
-- Real users must replace scraped listings over time
+**How to run (proven pattern 2026-04-08):**
+```bash
+python3 scripts/scrape_pakwheels.py --pages 3       # 3 pages/brand, all brands (~3 min)
+python3 scripts/scrape_pakwheels.py --brand byd --pages 1 --dry-run  # test run
+python3 scripts/scrape_pakwheels.py --brand byd --pages 1 --images   # slow (image scraping)
+```
+
+**What gets extracted:**
+- Product name, price, location, year, mileage (from JSON-LD)
+- Images (optional via `--images` flag; extracts data-src from gallery `<ul class="light-gallery">`)
+- **Fast run (no images):** 434 listings in ~2-3 min ✅
+- **Image scraping:** Disabled by default (adds 1-2s per listing = rate limit risk)
+
+**Rules:**
+- Use for seeding ONLY (transition to organic by Day 31)
+- Must attach `source` ("PAKWHEELS" | "OLX") + `sourceUrl`
+- Real user submissions replace scraped listings over time
+- Re-run before seller outreach (fresh images + latest prices)
+- Increase delay to 3.0s to handle image requests without blocking
 
 ---
 
