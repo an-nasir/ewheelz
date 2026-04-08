@@ -3,10 +3,11 @@ eWheelz — PakWheels EV Scraper (JSON-LD edition)
 Reads structured data from page — no CSS selectors, won't break on redesigns.
 
 Usage:
-  python3 scripts/scrape_pakwheels.py               # normal, 3 pages/brand
-  python3 scripts/scrape_pakwheels.py --dry-run      # print JSON, don't push
-  python3 scripts/scrape_pakwheels.py --pages 5      # deeper scrape
-  python3 scripts/scrape_pakwheels.py --brand byd    # one brand only
+  python3 scripts/scrape_pakwheels.py                    # normal, 3 pages/brand (no images)
+  python3 scripts/scrape_pakwheels.py --dry-run          # print JSON, don't push
+  python3 scripts/scrape_pakwheels.py --pages 5          # deeper scrape
+  python3 scripts/scrape_pakwheels.py --brand byd        # one brand only
+  python3 scripts/scrape_pakwheels.py --images           # include image scraping (slower)
 
 Env vars:
   EWHEELZ_API    default: http://localhost:3000
@@ -25,7 +26,7 @@ CONFIG = {
     ],
     "api_base":    os.getenv("EWHEELZ_API", "http://localhost:3000"),
     "scraper_key": os.getenv("SCRAPER_KEY", "ewheelz-scraper-key-change-me"),
-    "delay_sec":   3.0,  # Increased for image scraping
+    "delay_sec":   1.5,  # Between page requests (images disabled)
 }
 
 HEADERS = {
@@ -64,7 +65,8 @@ def scrape_images(listing_url: str) -> list:
         return []
 
     try:
-        r = requests.get(listing_url, headers=HEADERS, timeout=20)
+        # Shorter timeout (10s) to fail fast on slow/blocked requests
+        r = requests.get(listing_url, headers=HEADERS, timeout=10)
         r.raise_for_status()
         soup = BeautifulSoup(r.text, "lxml")
 
@@ -92,12 +94,15 @@ def scrape_images(listing_url: str) -> list:
 
         return images
 
+    except requests.Timeout:
+        # Timeout on detail page fetch — skip images, continue
+        return []
     except Exception as e:
         # Silent fail — missing images don't block the listing
         return []
 
 
-def scrape_brand(brand: str, max_pages: int = 3) -> list:
+def scrape_brand(brand: str, max_pages: int = 3, scrape_imgs: bool = False) -> list:
     listings = []
 
     for page in range(1, max_pages + 1):
@@ -149,8 +154,8 @@ def scrape_brand(brand: str, max_pages: int = 3) -> list:
                 mileage_raw = p.get("mileageFromOdometer", "")
                 description = p.get("description", "")
 
-                # Scrape images from the detail page
-                images = scrape_images(source_url)
+                # Image scraping is optional (adds ~1-2s per listing)
+                images = scrape_images(source_url) if scrape_imgs else []
 
                 listings.append({
                     "title":      p.get("name", ""),
@@ -223,6 +228,7 @@ if __name__ == "__main__":
     parser.add_argument("--key",        type=str)
     parser.add_argument("--brand",      type=str, help="Single brand only")
     parser.add_argument("--no-backup",  action="store_true", help="Skip local JSON backup")
+    parser.add_argument("--images",     action="store_true", help="Include image scraping (slow, optional)")
     args = parser.parse_args()
 
     if args.api: CONFIG["api_base"]    = args.api.rstrip("/")
@@ -234,7 +240,7 @@ if __name__ == "__main__":
 
     all_listings = []
     for brand in brands:
-        brand_listings = scrape_brand(brand, max_pages=args.pages)
+        brand_listings = scrape_brand(brand, max_pages=args.pages, scrape_imgs=args.images)
         all_listings.extend(brand_listings)
         print(f"  {brand.upper()} subtotal: {len(brand_listings)}\n")
         time.sleep(CONFIG["delay_sec"])
