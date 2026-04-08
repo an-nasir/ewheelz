@@ -5,6 +5,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { randomBytes } from "crypto";
 import { prisma } from "@/lib/prisma";
+import { calcDealGrade } from "@/lib/dealGrade";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -58,6 +59,31 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Enter a valid 10-digit phone number" }, { status: 400 });
     }
 
+    // Compute deal grade using live market comps
+    const parsedPrice = parseInt(String(price));
+    const compsWhere: Record<string, unknown> = { status: "ACTIVE" };
+    if (evModelId)   compsWhere.evModelId = evModelId;
+    else if (evName) compsWhere.evName    = { contains: evName.split(" ")[0] };
+
+    const comps = await prisma.listing.findMany({
+      where:   compsWhere,
+      select:  { price: true },
+      orderBy: { createdAt: "desc" },
+      take:    30,
+    });
+    const prices = comps.map(c => c.price);
+    const avgMarketPrice = prices.length
+      ? Math.round(prices.reduce((a, b) => a + b, 0) / prices.length)
+      : null;
+
+    const dealGrade = calcDealGrade(
+      parsedPrice,
+      avgMarketPrice,
+      batteryHealth ? parseFloat(String(batteryHealth)) : null,
+      mileage       ? parseInt(String(mileage))         : null,
+      parseInt(String(year)),
+    );
+
     const listing = await prisma.listing.create({
       data: {
         userId:          null,            // anonymous by default
@@ -76,6 +102,7 @@ export async function POST(request: NextRequest) {
         contactWhatsapp: contactWhatsapp?.trim()  ?? null,
         status:          "ACTIVE",
         featured:        false,
+        dealGrade:       dealGrade,
         sellerToken:     randomBytes(20).toString("hex"),
       },
     });

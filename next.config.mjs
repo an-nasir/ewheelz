@@ -15,6 +15,10 @@ const nextConfig = {
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: "plus.unsplash.com" },
+      { protocol: "https", hostname: "**.pakwheels.com" },
+      { protocol: "https", hostname: "**.olx.com.pk" },
+      { protocol: "https", hostname: "apollo.olx.com.pk" },
+      { protocol: "https", hostname: "**.cloudfront.net" },
     ],
   },
   // ── Redirect broken/legacy routes (NO self-redirects!) ───────────────────

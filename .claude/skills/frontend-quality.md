@@ -27,49 +27,43 @@ Reject:
 * table-heavy layouts
 * flat cards
 * outdated marketplace look
-  EOF
 
-# ---------------- UI SYSTEM ----------------
+---
 
-cat > .claude/skills/ui-system.md << 'EOF'
+## ⛔ NEVER: IIFE in JSX
 
-# UI System
+**Never use immediately-invoked function expressions inside JSX.**
 
-Color system:
+This pattern WILL cause `TypeError: Cannot read properties of undefined (reading 'call')` at runtime in Next.js App Router — even if the build passes.
 
-bg-main: #F6F8FF
-surface: #FFFFFF
-soft: #EEF2FF
+```tsx
+// ❌ BROKEN — causes runtime chunk loading error
+{condition && (() => {
+  const x = compute();
+  return <span>{x}</span>;
+})()}
+```
 
-primary gradient:
-linear-gradient(135deg,#6366F1,#8B5CF6)
+**Always use a named function defined outside JSX:**
 
-secondary gradient:
-linear-gradient(135deg,#3B82F6,#6366F1)
+```tsx
+// ✅ CORRECT
+function MyBadge({ value }: { value: string }) {
+  const x = compute(value);
+  return <span>{x}</span>;
+}
 
-energy gradient:
-linear-gradient(135deg,#22C55E,#10B981)
+// In JSX:
+{condition && <MyBadge value={val} />}
+```
 
-text-primary: #0F172A
-text-secondary: #475569
-border: #E6E9F2
+Or a simple ternary/expression if the logic is trivial:
 
-Components:
-
-Cards:
-
-* radius 14px
-* shadow: 0 20px 40px rgba(0,0,0,0.08)
-* hover: translateY(-6px) scale(1.02)
-
-Buttons:
-
-* gradient background
-* rounded 12px
-
-Inputs:
-
-* border + soft focus glow
-
-Goal:
-feel like JetBrains / Linear / Stripe
+```tsx
+// ✅ also fine for simple cases
+{health != null && (
+  <span style={{ color: health > 80 ? "green" : "red" }}>
+    {health}%
+  </span>
+)}
+```

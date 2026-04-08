@@ -26,13 +26,18 @@ function BigPill({ active, onClick, children }: { active: boolean; onClick: () =
 
 export default function ValuationClient({ evs }: { evs: EvOption[] }) {
   const params = useSearchParams();
+
+  const preSlug  = params.get("evSlug") ?? "";
+  const prePrice = params.get("price") ? Number(params.get("price")) : null;
+  const preCity  = params.get("city") ?? "";
+
   const [form, setForm] = useState<ValuationInput>({
-    evSlug: "",
-    year: Number(params.get("year")) || 2023,
-    odometer: Number(params.get("odometer")) || 30000,
+    evSlug:       preSlug,
+    year:         Number(params.get("year"))     || 2023,
+    odometer:     Number(params.get("odometer")) || 30000,
     batteryGrade: (params.get("batteryGrade") as any) || "unknown",
-    city: "",
-    condition: "good",
+    city:         preCity,
+    condition:    "good",
   });
   const [result, setResult] = useState<ValuationResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -58,8 +63,36 @@ export default function ValuationClient({ evs }: { evs: EvOption[] }) {
   const fmt = (n: number) => `PKR ${(n / 1_000_000).toFixed(2)}M`;
 
   // ── RESULT ─────────────────────────────────────────────────────────────────
-  if (result) return (
+  if (result) {
+    const priceDiff = prePrice ? prePrice - result.midpoint : null;
+    const isFair    = priceDiff !== null && Math.abs(priceDiff) / result.midpoint < 0.08;
+    const isHot     = priceDiff !== null && priceDiff < -result.midpoint * 0.1;
+    const isOver    = priceDiff !== null && priceDiff > result.midpoint * 0.1;
+
+    return (
     <div className="space-y-4">
+      {/* Listed price verdict banner */}
+      {prePrice && (
+        <div className="rounded-2xl p-4 flex items-center gap-4"
+          style={{
+            background: isHot ? "#F0FDF4" : isOver ? "#FFF1F2" : "#EEF2FF",
+            border: `1px solid ${isHot ? "#86EFAC" : isOver ? "#FECDD3" : "#C7D2FE"}`,
+          }}>
+          <span className="text-2xl">{isHot ? "🔥" : isOver ? "⚠️" : "✅"}</span>
+          <div>
+            <div className="text-sm font-black" style={{ color: isHot ? "#15803D" : isOver ? "#BE123C" : "#4F46E5" }}>
+              {isHot ? "This is a Hot Deal — below market!" : isOver ? "Listed above market value" : "Fair price — in line with market"}
+            </div>
+            <div className="text-xs text-slate-500 mt-0.5">
+              Listed at <strong>{fmt(prePrice)}</strong> · Market midpoint <strong>{fmt(result.midpoint)}</strong>
+              {priceDiff !== null && (
+                <> · {priceDiff > 0 ? "+" : ""}{fmt(Math.abs(priceDiff))} {priceDiff > 0 ? "over" : "under"}</>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="bg-white rounded-3xl border border-[#E6E9F2] shadow-sm p-8">
 
         <div className="text-center mb-8">
@@ -114,6 +147,7 @@ export default function ValuationClient({ evs }: { evs: EvOption[] }) {
       </div>
     </div>
   );
+  }
 
   // ── FORM ───────────────────────────────────────────────────────────────────
   const canSubmit = form.evSlug && form.city;

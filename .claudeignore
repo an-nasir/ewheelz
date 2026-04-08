@@ -1,0 +1,14 @@
+# Dependencies & Builds
+node_modules/
+.next/
+.expo/
+dist/
+build/
+package-lock.json
+
+# Database & Cache
+*.db*
+*.tsbuildinfo
+
+# Version Control
+.git/

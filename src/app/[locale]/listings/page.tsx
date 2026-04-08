@@ -1,8 +1,7 @@
 // src/app/listings/page.tsx — EV Marketplace (JetBrains-inspired design)
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import WhatsAppButton from "@/components/WhatsAppButton";
-import ScamReportButton from "@/components/ScamReportButton";
+import ListingsView from "@/components/ListingsView";
 
 export const metadata = {
   title: "Used Electric Cars for Sale in Pakistan — BYD, MG, Hyundai | eWheelz",
@@ -11,33 +10,38 @@ export const metadata = {
 
 interface SearchParams { city?: string; brand?: string; min_price?: string; max_price?: string }
 
-const POWERTRAIN_STYLES: Record<string, { bg: string; color: string; border: string }> = {
-  BEV:  { bg: "#F0FDF4", color: "#16A34A", border: "#86EFAC" },
-  PHEV: { bg: "#EEF2FF", color: "#4F46E5", border: "#A5B4FC" },
-  REEV: { bg: "#F5F3FF", color: "#7C3AED", border: "#C4B5FD" },
-  HEV:  { bg: "#FFFBEB", color: "#B45309", border: "#FCD34D" },
-};
-
-export default async function ListingsPage({ searchParams }: { searchParams: SearchParams }) {
+export default async function ListingsPage({
+  params,
+  searchParams,
+}: {
+  params: { locale: string };
+  searchParams: SearchParams;
+}) {
+  const locale = params.locale;
   const { city, brand, min_price, max_price } = searchParams;
 
-  const listings = await prisma.listing.findMany({
-    where: {
-      status: "ACTIVE",
-      ...(city && { city }),
-      ...(min_price || max_price ? { price: {
-        ...(min_price ? { gte: parseInt(min_price) } : {}),
-        ...(max_price ? { lte: parseInt(max_price) } : {}),
-      }} : {}),
-      ...(brand ? { evModel: { brand } } : {}),
-    },
-    include: {
-      evModel: { select: { brand: true, model: true, variant: true, slug: true, powertrain: true } },
-      user:    { select: { name: true, city: true } },
-    },
-    orderBy: { createdAt: "desc" },
-    take: 50,
-  });
+  const where = {
+    status: "ACTIVE" as const,
+    ...(city && { city }),
+    ...(min_price || max_price ? { price: {
+      ...(min_price ? { gte: parseInt(min_price) } : {}),
+      ...(max_price ? { lte: parseInt(max_price) } : {}),
+    }} : {}),
+    ...(brand ? { evModel: { brand } } : {}),
+  };
+
+  const [listings, totalCount] = await Promise.all([
+    prisma.listing.findMany({
+      where,
+      include: {
+        evModel: { select: { brand: true, model: true, variant: true, slug: true, powertrain: true, imageUrl: true } },
+        user:    { select: { name: true, city: true } },
+      },
+      orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
+      take: 20,
+    }),
+    prisma.listing.count({ where }),
+  ]);
 
   const cities      = ["Lahore", "Karachi", "Islamabad", "Rawalpindi", "Peshawar"];
   const brands      = ["BYD", "MG", "Hyundai", "Changan", "Honri", "Deepal", "Tesla"];
@@ -53,7 +57,7 @@ export default async function ListingsPage({ searchParams }: { searchParams: Sea
     const merged = { city, brand, min_price, max_price, ...params };
     for (const [k, v] of Object.entries(merged)) { if (v) base.set(k, v); }
     const q = base.toString();
-    return `/listings${q ? `?${q}` : ""}`;
+    return `/${locale}/listings${q ? `?${q}` : ""}`;
   }
 
   const hasFilters = !!(city || brand || min_price);
@@ -84,7 +88,7 @@ export default async function ListingsPage({ searchParams }: { searchParams: Sea
               Buy &amp; Sell EVs
             </h1>
             <p className="text-green-100 text-lg">
-              {listings.length} active listing{listings.length !== 1 ? "s" : ""} across Pakistan
+              {totalCount} active listing{totalCount !== 1 ? "s" : ""} across Pakistan
             </p>
           </div>
         </div>
@@ -123,7 +127,7 @@ export default async function ListingsPage({ searchParams }: { searchParams: Sea
               </FilterSection>
 
               {hasFilters && (
-                <Link href="/listings"
+                <Link href={`/${locale}/listings`}
                   className="block text-xs text-center text-slate-400 hover:text-red-500 pt-3 transition-colors"
                   style={{ borderTop: "1px solid #E6E9F2" }}>
                   ✕ Clear all filters
@@ -132,124 +136,12 @@ export default async function ListingsPage({ searchParams }: { searchParams: Sea
             </div>
           </aside>
 
-          {/* ── Listings ── */}
-          <div className="flex-1 space-y-3">
-            {listings.length === 0 ? (
-              <div className="rounded-2xl p-14 text-center"
-                style={{ background: "#FFFFFF", border: "1px solid #E6E9F2" }}>
-                <div className="text-4xl mb-3">🔋</div>
-                <p className="text-slate-500">No listings match these filters.</p>
-                <Link href="/listings" className="mt-4 inline-block text-sm text-indigo-600 hover:underline">Clear filters</Link>
-              </div>
-            ) : listings.map((l, idx) => {
-              const pt = POWERTRAIN_STYLES[l.evModel?.powertrain ?? "BEV"] ?? POWERTRAIN_STYLES.BEV;
-              return (
-                <div key={l.id}
-                  className="group rounded-2xl p-5 hover-lift"
-                  style={{
-                    background: "#FFFFFF",
-                    border: "1px solid #E6E9F2",
-                    animationDelay: `${idx * 30}ms`,
-                  }}>
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-
-                    {/* Left accent bar */}
-                    <div className="hidden sm:block w-1 self-stretch rounded-full flex-shrink-0"
-                      style={{ background: `linear-gradient(180deg,${pt.color},${pt.border})` }} />
-
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <Link href={l.evModel?.slug ? `/ev/${l.evModel.slug}` : "/ev"}
-                          className="font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
-                          {l.evModel?.brand ?? l.evName ?? "EV"} {l.evModel?.model ?? ""}
-                          {l.evModel?.variant && ` ${l.evModel.variant}`}
-                        </Link>
-                        {/* Powertrain badge */}
-                        <span className="text-[10px] px-2 py-0.5 rounded-full font-bold"
-                          style={{ background: pt.bg, color: pt.color, border: `1px solid ${pt.border}` }}>
-                          {l.evModel?.powertrain ?? "BEV"}
-                        </span>
-                        {/* Year */}
-                        <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold"
-                          style={{ background: "#F6F8FF", color: "#64748B", border: "1px solid #E6E9F2" }}>
-                          {l.year}
-                        </span>
-                        {/* Condition */}
-                        <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold"
-                          style={l.condition === "NEW"
-                            ? { background: "#EEF2FF", color: "#4F46E5", border: "1px solid #A5B4FC" }
-                            : { background: "#F6F8FF", color: "#64748B", border: "1px solid #E6E9F2" }}>
-                          {l.condition}
-                        </span>
-                      </div>
-
-                      {l.description && (
-                        <p className="text-sm text-slate-500 mt-1 line-clamp-1">{l.description}</p>
-                      )}
-
-                      <div className="flex flex-wrap gap-4 mt-2 text-xs text-slate-400">
-                        <span>📍 {l.city}</span>
-                        {l.mileage       != null && <span>🛣 {l.mileage.toLocaleString()} km</span>}
-                        {l.batteryHealth != null && (() => {
-                          const h = l.batteryHealth!;
-                          const grade = h >= 90 ? "A" : h >= 80 ? "B" : h >= 70 ? "C" : h >= 60 ? "D" : "F";
-                          const gc = grade === "A" ? "#16A34A" : grade === "B" ? "#6366F1" : grade === "C" ? "#D97706" : grade === "D" ? "#EA580C" : "#DC2626";
-                          return (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black"
-                              style={{ background: `${gc}15`, color: gc, border: `1px solid ${gc}30` }}>
-                              🔋 Grade {grade}
-                            </span>
-                          );
-                        })()}
-                        {(l.user?.name || l.contactName) && <span>👤 {l.user?.name ?? l.contactName}</span>}
-                        {/* Verified badge */}
-                        {(l as any).verifiedSeller && (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black"
-                            style={{ background: "#EEF2FF", color: "#4F46E5", border: "1px solid #C7D2FE" }}>
-                            ✅ Verified
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Price + Contact */}
-                    <div className="text-right shrink-0 flex flex-col items-end gap-2">
-                      <div>
-                        <div className="text-xl font-black"
-                          style={{ background: "linear-gradient(135deg,#22C55E,#10B981)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
-                          PKR {(l.price / 1_000_000).toFixed(2)}M
-                        </div>
-                        <div className="text-xs text-slate-400 mt-0.5">PKR {l.price.toLocaleString()}</div>
-                      </div>
-
-                      {/* Contact Seller */}
-                      <WhatsAppButton
-                        brand={l.evModel?.brand ?? l.evName ?? "EV"}
-                        model={l.evModel?.model ?? ""}
-                        year={l.year}
-                        price={l.price}
-                        city={l.city}
-                      />
-
-                      {/* View listing detail */}
-                      <Link href={`/listings/${l.id}` as any}
-                        className="text-[11px] text-indigo-500 hover:text-indigo-700 font-semibold transition-colors">
-                        View listing →
-                      </Link>
-                      {/* View EV specs link */}
-                      {l.evModel?.slug && (
-                        <Link href={`/ev/${l.evModel.slug}`}
-                          className="text-[11px] text-slate-400 hover:text-slate-600 font-semibold transition-colors">
-                          Specs →
-                        </Link>
-                      )}
-                      <ScamReportButton listingId={l.id} />
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          {/* ── Listings (Card/Table + Lazy Loading) ── */}
+          <ListingsView
+            initialListings={JSON.parse(JSON.stringify(listings))}
+            initialTotal={totalCount}
+            searchParams={{ city, brand, min_price, max_price }}
+          />
         </div>
       </div>
     </div>
