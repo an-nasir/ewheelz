@@ -25,7 +25,7 @@ CONFIG = {
     ],
     "api_base":    os.getenv("EWHEELZ_API", "http://localhost:3000"),
     "scraper_key": os.getenv("SCRAPER_KEY", "ewheelz-scraper-key-change-me"),
-    "delay_sec":   2.0,
+    "delay_sec":   3.0,  # Increased for image scraping
 }
 
 HEADERS = {
@@ -50,6 +50,51 @@ def parse_city(description: str) -> str:
     """'BYD Atto 3 2025 for sale in Karachi' → 'Karachi'"""
     m = re.search(r"for sale in (.+)$", description or "", re.IGNORECASE)
     return m.group(1).strip() if m else "Unknown"
+
+
+def scrape_images(listing_url: str) -> list:
+    """
+    Extract all high-res image URLs from a PakWheels listing detail page.
+    Looks for the gallery <ul> with class containing 'light-gallery' or 'lightSlider'.
+    Extracts data-src from <li class='lslide'> or <li> with data-src attribute.
+
+    Returns: list of image URLs (strings), empty list if extraction fails or no images found.
+    """
+    if not listing_url:
+        return []
+
+    try:
+        r = requests.get(listing_url, headers=HEADERS, timeout=20)
+        r.raise_for_status()
+        soup = BeautifulSoup(r.text, "lxml")
+
+        # Try multiple selectors for the gallery container
+        gallery = None
+        for selector in [
+            soup.find("ul", class_=re.compile(r"light-gallery")),
+            soup.find("ul", class_=re.compile(r"lightSlider")),
+            soup.find("ul", class_="img-content"),
+        ]:
+            if selector:
+                gallery = selector
+                break
+
+        if not gallery:
+            return []
+
+        images = []
+        # Find all list items with data-src (includes lslide and others)
+        for li in gallery.find_all("li"):
+            img_url = li.get("data-src", "")
+            # Skip placeholder/base64 images
+            if img_url and "base64" not in img_url and img_url.startswith("http"):
+                images.append(img_url)
+
+        return images
+
+    except Exception as e:
+        # Silent fail — missing images don't block the listing
+        return []
 
 
 def scrape_brand(brand: str, max_pages: int = 3) -> list:
@@ -104,6 +149,9 @@ def scrape_brand(brand: str, max_pages: int = 3) -> list:
                 mileage_raw = p.get("mileageFromOdometer", "")
                 description = p.get("description", "")
 
+                # Scrape images from the detail page
+                images = scrape_images(source_url)
+
                 listings.append({
                     "title":      p.get("name", ""),
                     "price":      str(int(price)),       # ingest API parses strings
@@ -111,6 +159,7 @@ def scrape_brand(brand: str, max_pages: int = 3) -> list:
                     "date":       "",
                     "source_url": source_url,
                     "source":     "PakWheels",
+                    "images":     images,  # Image URLs from gallery
                     # Extra fields parsed here so ingest doesn't have to guess
                     "_year":    p.get("modelDate"),
                     "_mileage": parse_mileage(mileage_raw),
@@ -191,6 +240,11 @@ if __name__ == "__main__":
         time.sleep(CONFIG["delay_sec"])
 
     print(f"Total scraped: {len(all_listings)}")
+
+    # Stats on image coverage
+    with_images = sum(1 for l in all_listings if l.get("images"))
+    total_images = sum(len(l.get("images", [])) for l in all_listings)
+    print(f"Images: {with_images}/{len(all_listings)} listings have images ({total_images} total images)")
 
     # Always save backup unless explicitly skipped
     if not args.dry_run and not args.no_backup:
