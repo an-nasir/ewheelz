@@ -5,7 +5,7 @@ import BatteryHealthClient from "./BatteryHealthClient";
 
 export const metadata: Metadata = {
   title: "EV Battery Health Check — Free | eWheelz",
-  description: "Check your EV battery health before buying or selling. Get a graded A–F report in 30 seconds.",
+  description: "Pre-screen EV battery risk before buying or selling. Get an estimated A-F signal in 60 seconds.",
 };
 
 const GRADES = [
@@ -38,7 +38,7 @@ export default function BatteryHealthPage() {
             </span>
           </h1>
           <p className="text-slate-400 text-base max-w-md mx-auto">
-            Fill in what you know. Get a grade. Know before you buy or sell.
+            Fill in what you know. Get an estimated signal before you inspect or negotiate.
           </p>
         </div>
       </div>
@@ -51,12 +51,12 @@ export default function BatteryHealthPage() {
           <BatteryHealthClient />
         </Suspense>
 
-        {/* Right: grade guide sidebar — hidden on mobile */}
+        {/* Right: signal guide sidebar — hidden on mobile */}
         <div className="hidden lg:flex flex-col gap-4">
 
-          {/* Grade guide */}
+          {/* Signal guide */}
           <div className="bg-white rounded-3xl border border-[#E6E9F2] shadow-sm p-6">
-            <div className="text-xs font-black uppercase tracking-widest text-slate-400 mb-4">What each grade means</div>
+            <div className="text-xs font-black uppercase tracking-widest text-slate-400 mb-4">What each signal means</div>
             <div className="space-y-3">
               {GRADES.map(g => (
                 <div key={g.grade} className="flex items-start gap-3 p-3 rounded-2xl" style={{ background: g.bg }}>
@@ -79,8 +79,8 @@ export default function BatteryHealthPage() {
             <div className="space-y-3">
               {[
                 { icon: "💰", text: "Battery is 40–60% of an EV's total value" },
-                { icon: "🔍", text: "Dealers never disclose degradation honestly" },
-                { icon: "📉", text: "Grade C vs A = PKR 3–8 lakh difference in resale" },
+                { icon: "🔍", text: "Seller claims need range or OBD evidence" },
+                { icon: "📉", text: "Weak vs strong battery evidence can move resale by lakhs" },
               ].map(item => (
                 <div key={item.icon} className="flex gap-3 items-start">
                   <span className="text-lg">{item.icon}</span>
@@ -92,8 +92,8 @@ export default function BatteryHealthPage() {
 
           {/* Cross-sell */}
           <div className="bg-indigo-50 border border-indigo-100 rounded-3xl p-5">
-            <div className="font-black text-slate-900 text-sm mb-1">Already have a grade?</div>
-            <div className="text-xs text-slate-500 mb-3">Find out what your EV is actually worth with that grade factored in.</div>
+            <div className="font-black text-slate-900 text-sm mb-1">Already have battery evidence?</div>
+            <div className="text-xs text-slate-500 mb-3">Find out what your EV is worth with battery risk factored in.</div>
             <a href="/ev-valuation"
               className="block w-full py-3 rounded-xl font-black text-white text-sm text-center"
               style={{ background: "linear-gradient(135deg,#6366F1,#8B5CF6)" }}>

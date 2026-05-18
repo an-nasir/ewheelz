@@ -4,15 +4,13 @@
 // Safe: skips duplicates by sourceUrl for listings.
 
 import { NextRequest, NextResponse } from "next/server";
+
+import { requireAdmin } from "@/lib/adminAuth";
 import { prisma } from "@/lib/prisma";
 
-const ADMIN_KEY = process.env.ADMIN_KEY ?? "ewheelz-admin-change-me";
-
 export async function POST(req: NextRequest) {
-  const key = req.headers.get("x-admin-key");
-  if (key !== ADMIN_KEY) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const authError = requireAdmin(req);
+  if (authError) return authError;
 
   const body = await req.json();
   const stats = { listings: 0, evModels: 0, leads: 0, skipped: 0 };

@@ -8,7 +8,6 @@ import { cacheStations, getCachedStations } from "@/lib/utils/offline";
 // Augment window for Leaflet CDN load
 declare global {
   interface Window {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     L: any;
   }
 }
@@ -31,9 +30,7 @@ const STATUS_COLOR: Record<string, string> = {
 
 export default function LeafletMap({ stations, height = "500px", tripRoute }: Props) {
   const mapRef = useRef<HTMLDivElement>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mapInstanceRef = useRef<any>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const markersLayerRef = useRef<any>(null);
   const [mapReady, setMapReady] = useState(false);
   const [error, setError] = useState("");

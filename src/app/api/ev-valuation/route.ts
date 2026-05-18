@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
   const excessKm = Math.max(0, body.odometer - 20000);
   const mileagePct = Math.min(0.20, (excessKm / 10000) * 0.015);
 
-  // ── Battery grade discount ─────────────────────────────────────────────────
+  // ── Battery signal discount ────────────────────────────────────────────────
   const batteryDiscount: Record<string, number> = {
     A: 0, B: 0.03, C: 0.08, D: 0.15, F: 0.25, unknown: 0.05
   };

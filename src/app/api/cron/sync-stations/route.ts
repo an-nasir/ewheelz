@@ -71,7 +71,6 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: `OCM API error: ${res.status}` }, { status: 502 });
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const stations: any[] = await res.json();
     results.total = stations.length;
 
@@ -83,13 +82,11 @@ export async function GET(req: NextRequest) {
 
         // Collect connector types
         const connectors = (s.Connections ?? [])
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           .map((c: any) => OCM_CONNECTOR[c.ConnectionTypeID] ?? c.ConnectionType?.Title ?? "Unknown")
           .filter(Boolean);
         const connectorTypes = Array.from(new Set<string>(connectors)).join(",") || "CCS2";
 
         // Max power
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const maxKw = (s.Connections ?? []).reduce((m: number, c: any) => Math.max(m, c.PowerKW ?? 0), 0);
 
         const data = {

@@ -3,6 +3,8 @@ import { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { ChargingStation } from "@/types";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "EV Charging Stations",
   description:

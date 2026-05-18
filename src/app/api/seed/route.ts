@@ -7,13 +7,20 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-const SEED_SECRET = process.env.SEED_SECRET ?? "ewheelz-seed-2025";
+const SEED_SECRET = process.env.SEED_SECRET?.trim() || null;
 
 export async function POST(req: NextRequest) {
   // ─── Auth ────────────────────────────────────────────────────────────────
   const secret =
     req.headers.get("x-seed-secret") ??
     new URL(req.url).searchParams.get("secret");
+
+  if (!SEED_SECRET) {
+    return NextResponse.json(
+      { error: "SEED_SECRET is not configured" },
+      { status: 503 },
+    );
+  }
 
   if (secret !== SEED_SECRET) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -22,6 +29,13 @@ export async function POST(req: NextRequest) {
   const force = new URL(req.url).searchParams.get("force") === "1";
   
   if (force) {
+    if (process.env.ALLOW_DESTRUCTIVE_SEED !== "true") {
+      return NextResponse.json(
+        { error: "force=1 is disabled. Set ALLOW_DESTRUCTIVE_SEED=true only in disposable dev/staging environments." },
+        { status: 403 },
+      );
+    }
+
     // Clear in dependency order
     await prisma.review.deleteMany();
     await prisma.listing.deleteMany();
@@ -65,7 +79,6 @@ export async function POST(req: NextRequest) {
     return prisma.evModel.upsert({
       where: { slug },
       update: {},
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       create: { slug, ...(data as any) },
     });
   }
@@ -78,7 +91,7 @@ export async function POST(req: NextRequest) {
     description: "Compact electric SUV with BYD Blade Battery. Popular in Pakistan for safety and value.",
     specs: { create: {
       rangeWltp: 420, rangeRealWorld: 400, batteryCapKwh: 60.5, batteryType: "LFP Blade",
-      batteryPackVoltage: 400 as any, chargingAcKw: 11, chargingDcKw: 80, chargingTime080: "30 min",
+      batteryPackVolt: 400 as any, chargingAcKw: 11, chargingDcKw: 80, chargingTime080: "30 min",
       chargingTime1080: "29 min", motorPowerKw: 150, torqueNm: 310, driveType: "FWD",
       topSpeed: 160, accel0100: 7.3, efficiencyWhKm: 157, weight: 1750,
       platform: "e-Platform 3.0", coolingSystem: "liquid",
@@ -102,7 +115,7 @@ export async function POST(req: NextRequest) {
     description: "Compact electric SUV. One of the first mass-market EVs in Pakistan.",
     specs: { create: {
       rangeWltp: 340, rangeRealWorld: 320, batteryCapKwh: 44.5, batteryType: "Lithium-ion",
-      batteryPackVoltage: 400, chargingAcKw: 7, chargingDcKw: 75, chargingTime080: "42 min",
+      batteryPackVolt: 400, chargingAcKw: 7, chargingDcKw: 75, chargingTime080: "42 min",
       motorPowerKw: 105, torqueNm: 353, driveType: "FWD", topSpeed: 160,
       accel0100: 8.5, efficiencyWhKm: 150, weight: 1590, coolingSystem: "liquid",
     }},
@@ -125,7 +138,7 @@ export async function POST(req: NextRequest) {
     description: "Performance electric sedan with Blade Battery. Tesla Model 3 competitor.",
     specs: { create: {
       rangeWltp: 570, rangeRealWorld: 480, batteryCapKwh: 82, batteryType: "LFP Blade",
-      batteryPackVoltage: 400, chargingAcKw: 11, chargingDcKw: 120, chargingTime080: "26 min",
+      batteryPackVolt: 400, chargingAcKw: 11, chargingDcKw: 120, chargingTime080: "26 min",
       motorPowerKw: 390, torqueNm: 670, driveType: "AWD", topSpeed: 180,
       accel0100: 3.8, efficiencyWhKm: 158, weight: 2150,
       platform: "e-Platform 3.0", coolingSystem: "liquid",
@@ -148,7 +161,7 @@ export async function POST(req: NextRequest) {
     description: "Range extender SUV by Changan. Solves range anxiety with combined 1000+ km range.",
     specs: { create: {
       rangeWltp: 200, rangeRealWorld: 180, batteryCapKwh: 79, batteryType: "Lithium-ion",
-      batteryPackVoltage: 400, chargingAcKw: 7, chargingDcKw: 80, chargingTime080: "35 min",
+      batteryPackVolt: 400, chargingAcKw: 7, chargingDcKw: 80, chargingTime080: "35 min",
       motorPowerKw: 190, torqueNm: 320, driveType: "FWD", topSpeed: 175,
       accel0100: 7.5, weight: 1950, coolingSystem: "liquid", combinedRange: 1100,
     }},
@@ -169,7 +182,7 @@ export async function POST(req: NextRequest) {
     description: "Premium electric crossover with 800V ultra-fast charging architecture.",
     specs: { create: {
       rangeWltp: 430, rangeRealWorld: 380, batteryCapKwh: 72.6, batteryType: "NMC",
-      batteryPackVoltage: 800, chargingAcKw: 11, chargingDcKw: 240,
+      batteryPackVolt: 800, chargingAcKw: 11, chargingDcKw: 240,
       chargingTime080: "18 min", chargingTime1080: "18 min",
       motorPowerKw: 239, torqueNm: 605, driveType: "AWD", topSpeed: 185,
       accel0100: 5.1, efficiencyWhKm: 171, weight: 2100, platform: "E-GMP", coolingSystem: "liquid",
@@ -193,7 +206,7 @@ export async function POST(req: NextRequest) {
     description: "First plug-in hybrid pickup in Pakistan. 100 km pure electric range.",
     specs: { create: {
       rangeWltp: 100, rangeRealWorld: 85, batteryCapKwh: 19, batteryType: "LFP Blade",
-      batteryPackVoltage: 400, chargingAcKw: 7, chargingDcKw: 40, chargingTime080: "25 min",
+      batteryPackVolt: 400, chargingAcKw: 7, chargingDcKw: 40, chargingTime080: "25 min",
       motorPowerKw: 224, torqueNm: 550, driveType: "AWD", topSpeed: 170,
       accel0100: 6.0, weight: 2550, towingCapacity: 2500, coolingSystem: "liquid", combinedRange: 840,
     }},
@@ -214,7 +227,7 @@ export async function POST(req: NextRequest) {
     description: "Ultra-affordable city EV. Ideal for short urban commutes in Pakistan.",
     specs: { create: {
       rangeWltp: 220, rangeRealWorld: 200, batteryCapKwh: 28.4, batteryType: "LFP",
-      batteryPackVoltage: 400 as any, chargingAcKw: 11, chargingDcKw: 130, motorPowerKw: 110,
+      batteryPackVolt: 400 as any, chargingAcKw: 11, chargingDcKw: 130, motorPowerKw: 110,
       torqueNm: 280, driveType: "FWD", topSpeed: 175, accel0100: 8.4,
       efficiencyWhKm: 186, weight: 1610, coolingSystem: "liquid",
     }},
@@ -235,7 +248,7 @@ export async function POST(req: NextRequest) {
     description: "Budget electric mini-car. One of the cheapest EVs available in Pakistan.",
     specs: { create: {
       rangeWltp: 301, rangeRealWorld: 250, batteryCapKwh: 18.5, batteryType: "LFP",
-      batteryPackVoltage: 350, chargingAcKw: 3.3, chargingTime080: "4 hrs (AC)",
+      batteryPackVolt: 350, chargingAcKw: 3.3, chargingTime080: "4 hrs (AC)",
       motorPowerKw: 25, torqueNm: 85, driveType: "FWD", topSpeed: 100,
       efficiencyWhKm: 80, weight: 850, coolingSystem: "air",
     }},
@@ -256,7 +269,7 @@ export async function POST(req: NextRequest) {
     description: "Premium electric sedan. Available in Pakistan via grey-market imports.",
     specs: { create: {
       rangeWltp: 560, rangeRealWorld: 490, batteryCapKwh: 75, batteryType: "NMC",
-      batteryPackVoltage: 400, chargingAcKw: 11, chargingDcKw: 250,
+      batteryPackVolt: 400, chargingAcKw: 11, chargingDcKw: 250,
       chargingTime080: "27 min", chargingTime1080: "25 min",
       motorPowerKw: 366, torqueNm: 493, driveType: "AWD", topSpeed: 201,
       accel0100: 4.4, efficiencyWhKm: 142, weight: 1830,
@@ -280,7 +293,7 @@ export async function POST(req: NextRequest) {
     description: "Sporty compact hatchback with Blade Battery. Fun city EV.",
     specs: { create: {
       rangeWltp: 427, rangeRealWorld: 380, batteryCapKwh: 44.9, batteryType: "LFP Blade",
-      batteryPackVoltage: 400, chargingAcKw: 7, chargingDcKw: 60, chargingTime080: "29 min",
+      batteryPackVolt: 400, chargingAcKw: 7, chargingDcKw: 60, chargingTime080: "29 min",
       motorPowerKw: 70, torqueNm: 180, driveType: "FWD", topSpeed: 150,
       accel0100: 8.5, efficiencyWhKm: 119, weight: 1490,
       platform: "e-Platform 3.0", coolingSystem: "liquid",
@@ -304,7 +317,7 @@ export async function POST(req: NextRequest) {
     description: "Sporty compact EV on MSP platform. Expected in Pakistan 2025.",
     specs: { create: {
       rangeWltp: 480, rangeRealWorld: 410, batteryCapKwh: 69, batteryType: "NMC",
-      batteryPackVoltage: 400 as any, chargingAcKw: 11, chargingDcKw: 153, chargingTime080: "26 min",
+      batteryPackVolt: 400 as any, chargingAcKw: 11, chargingDcKw: 153, chargingTime080: "26 min",
       motorPowerKw: 200, torqueNm: 343, driveType: "RWD", topSpeed: 180,
       accel0100: 5.7, efficiencyWhKm: 158, weight: 1793, coolingSystem: "liquid",
     } as any},
@@ -325,7 +338,7 @@ export async function POST(req: NextRequest) {
     description: "Premium 800V crossover. Ultra-fast 18-min 10-80% charging.",
     specs: { create: {
       rangeWltp: 528, rangeRealWorld: 450, batteryCapKwh: 77.4, batteryType: "NMC",
-      batteryPackVoltage: 800 as any, chargingAcKw: 11, chargingDcKw: 233, chargingTime080: "18 min",
+      batteryPackVolt: 800 as any, chargingAcKw: 11, chargingDcKw: 233, chargingTime080: "18 min",
       motorPowerKw: 168, torqueNm: 350, driveType: "RWD", topSpeed: 185,
       accel0100: 7.4, efficiencyWhKm: 172, weight: 2010, platform: "E-GMP",
     }},
@@ -346,7 +359,7 @@ export async function POST(req: NextRequest) {
     description: "Stylish compact SUV with ADAS. Growing presence in Pakistan via Chery dealers.",
     specs: { create: {
       rangeWltp: 430, rangeRealWorld: 390, batteryCapKwh: 61.1, batteryType: "NMC",
-      batteryPackVoltage: 400 as any, motorPowerKw: 30, torqueNm: 110, driveType: "FWD",
+      batteryPackVolt: 400 as any, motorPowerKw: 30, torqueNm: 110, driveType: "FWD",
       topSpeed: 101, accel0100: 16.0, efficiencyWhKm: 90, weight: 950,
       coolingSystem: "air",
     }},
@@ -367,7 +380,7 @@ export async function POST(req: NextRequest) {
     description: "Toyota's flagship BEV on e-TNGA platform. Reliable Japanese engineering.",
     specs: { create: {
       rangeWltp: 466, rangeRealWorld: 400, batteryCapKwh: 71.4, batteryType: "NMC",
-      batteryPackVoltage: 400, chargingAcKw: 11, chargingDcKw: 150, chargingTime080: "30 min",
+      batteryPackVolt: 400, chargingAcKw: 11, chargingDcKw: 150, chargingTime080: "30 min",
       motorPowerKw: 160, torqueNm: 337, driveType: "AWD", topSpeed: 160,
       accel0100: 7.7, efficiencyWhKm: 175, weight: 2085,
       platform: "e-TNGA", coolingSystem: "liquid",
@@ -389,7 +402,7 @@ export async function POST(req: NextRequest) {
     description: "BYD's latest mid-size SUV. Expected in Pakistan 2025-26.",
     specs: { create: {
       rangeWltp: 500, rangeRealWorld: 450, batteryCapKwh: 76.8, batteryType: "LFP Blade",
-      batteryPackVoltage: 400, chargingAcKw: 11, chargingDcKw: 150, chargingTime080: "27 min",
+      batteryPackVolt: 400, chargingAcKw: 11, chargingDcKw: 150, chargingTime080: "27 min",
       motorPowerKw: 160, torqueNm: 310, driveType: "FWD", topSpeed: 175,
       accel0100: 7.5, efficiencyWhKm: 168, weight: 1900,
       platform: "e-Platform 3.0", coolingSystem: "liquid",
@@ -411,7 +424,7 @@ export async function POST(req: NextRequest) {
     description: "Malaysian EV sedan on Geely platform. Potential import to Pakistan.",
     specs: { create: {
       rangeWltp: 440, rangeRealWorld: 390, batteryCapKwh: 49, batteryType: "NMC",
-      batteryPackVoltage: 400 as any, chargingAcKw: 11, chargingDcKw: 115, chargingTime080: "45 min",
+      batteryPackVolt: 400 as any, chargingAcKw: 11, chargingDcKw: 115, chargingTime080: "45 min",
       motorPowerKw: 390, torqueNm: 670, driveType: "AWD", topSpeed: 180,
       accel0100: 3.8, efficiencyWhKm: 166, weight: 2185, coolingSystem: "blade",
     }},
@@ -432,7 +445,7 @@ export async function POST(req: NextRequest) {
     description: "Volvo's smallest and most affordable EV. Premium compact SUV.",
     specs: { create: {
       rangeWltp: 480, rangeRealWorld: 410, batteryCapKwh: 69, batteryType: "NMC",
-      batteryPackVoltage: 400 as any, chargingAcKw: 11, chargingDcKw: 170, chargingTime080: "30 min",
+      batteryPackVolt: 400 as any, chargingAcKw: 11, chargingDcKw: 170, chargingTime080: "30 min",
       motorPowerKw: 211, torqueNm: 400, driveType: "RWD", topSpeed: 233,
       accel0100: 6.1, efficiencyWhKm: 147, weight: 1911, coolingSystem: "liquid",
     }},

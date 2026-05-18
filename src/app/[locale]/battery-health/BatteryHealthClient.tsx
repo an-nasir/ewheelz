@@ -1,7 +1,7 @@
 "use client";
 import { useState, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
-import type { BatteryHealthReport } from "@/app/api/battery-health/route";
+import type { BatteryHealthReport } from "@/lib/batteryHealth";
 import Link from "next/link";
 
 const CITIES = [
@@ -100,7 +100,7 @@ export default function BatteryHealthClient() {
   async function submitLead() {
     await fetch("/api/leads", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ evName, ...lead, message: `Grade ${report?.grade}`, source: "battery_health" }),
+      body: JSON.stringify({ evName, ...lead, message: `Battery signal ${report?.grade}`, source: "battery_health" }),
     });
     setLeadDone(true);
   }
@@ -113,7 +113,7 @@ export default function BatteryHealthClient() {
     const gbg = GRADE_BG[report.grade];
     return (
       <div className="space-y-4">
-        {/* Grade card */}
+        {/* Signal card */}
         <div className="bg-white rounded-3xl border border-[#E6E9F2] shadow-sm p-8 text-center">
           <div className="w-28 h-28 rounded-full flex items-center justify-center mx-auto mb-4"
             style={{ background: gbg, border: `3px solid ${gc}` }}>
@@ -121,7 +121,7 @@ export default function BatteryHealthClient() {
           </div>
           <div className="text-slate-400 text-sm mb-1">{evName} · {year} · {odometer.toLocaleString()} km</div>
           <div className="text-5xl font-black text-slate-900 mb-1">{report.healthPct}%</div>
-          <div className="text-slate-500 text-sm mb-4">Battery Health</div>
+          <div className="text-slate-500 text-sm mb-4">Estimated battery signal</div>
           <p className="text-slate-600 leading-relaxed">{report.verdict}</p>
         </div>
 
@@ -151,7 +151,7 @@ export default function BatteryHealthClient() {
               <button onClick={() => setShowLead(true)}
                 className="w-full py-4 rounded-2xl font-black text-white text-base"
                 style={{ background: "linear-gradient(135deg,#6366F1,#8B5CF6)" }}>
-                Get a verified workshop report →
+                Request workshop inspection →
               </button>
             ) : (
               <div className="bg-white rounded-2xl border border-[#E6E9F2] shadow-sm p-5 space-y-3">
@@ -201,7 +201,7 @@ export default function BatteryHealthClient() {
   return (
     <div className="rounded-3xl border border-[#E6E9F2] shadow-sm p-7 space-y-8 pt-8" style={{ background: "linear-gradient(135deg,#F5F3FF 0%,#FAFBFF 100%)" }}>
 
-      {/* Live grade preview */}
+      {/* Live signal preview */}
       {liveGrade && (
         <div className="flex items-center gap-4 p-4 rounded-2xl border-2 transition-all"
           style={{ background: GRADE_BG[liveGrade.grade], borderColor: `${GRADE_COLOR[liveGrade.grade]}50` }}>
@@ -211,7 +211,7 @@ export default function BatteryHealthClient() {
           </div>
           <div>
             <div className="font-black text-slate-900">{liveGrade.pct}% range retained</div>
-            <div className="text-sm text-slate-500">Submit below for the full report</div>
+            <div className="text-sm text-slate-500">Submit below for the full risk report</div>
           </div>
         </div>
       )}
@@ -246,7 +246,7 @@ export default function BatteryHealthClient() {
         </div>
       </div>
 
-      {/* Range — live grade appears when both filled */}
+      {/* Range — live signal appears when both filled */}
       <div>
         <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-1">Range (km)</label>
         <div className="text-slate-400 text-xs mb-4">Enter original range when bought, and what it shows on a full charge today</div>
@@ -303,7 +303,7 @@ export default function BatteryHealthClient() {
       <button onClick={submit} disabled={!canSubmit || loading}
         className="w-full py-5 rounded-2xl font-black text-lg text-white transition-all disabled:opacity-40"
         style={{ background: "linear-gradient(135deg,#6366F1,#8B5CF6)" }}>
-        {loading ? "Analyzing..." : "Get My Grade →"}
+        {loading ? "Analyzing..." : "Get My Signal →"}
       </button>
     </div>
   );

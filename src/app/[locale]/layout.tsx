@@ -4,7 +4,7 @@ import "../globals.css";
 import NavBar from "@/components/NavBar";
 import Footer from "@/components/Footer";
 
-const BASE_URL = "https://ewheelz.vercel.app";
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "https://ewheelz.vercel.app";
 
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
       "Compare EVs, explore battery tech, find 20+ charging stations across Pakistan. Your complete EV buying guide.",
     images: [
       {
-        url: "/og-default.png",
+        url: "https://images.unsplash.com/photo-1593941707882-a5bba14938c7?w=1200&q=85",
         width: 1200,
         height: 630,
         alt: "eWheelz — Pakistan EV Intelligence Platform",
@@ -40,7 +40,7 @@ export const metadata: Metadata = {
     title: "eWheelz — Pakistan EV Intelligence Platform",
     description:
       "Compare EVs, explore battery tech, find 20+ charging stations across Pakistan.",
-    images: ["/og-default.png"],
+    images: ["https://images.unsplash.com/photo-1593941707882-a5bba14938c7?w=1200&q=85"],
     creator: "@eWheelzPK",
   },
   robots: {

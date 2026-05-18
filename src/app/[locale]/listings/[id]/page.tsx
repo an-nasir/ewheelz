@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { TrackA } from "@/components/TrackLink";
+import { getListingTrust, getSourceLabel } from "@/lib/listingTrust";
 
 const BASE = process.env.NEXT_PUBLIC_BASE_URL ?? "https://ewheelz.pk";
 
@@ -50,6 +52,14 @@ function gradeLabel(h: number | null) {
   return             { grade: "F", label: "Replace",    color: "#DC2626" };
 }
 
+function normalizeWhatsappNumber(value?: string | null): string {
+  const digits = (value ?? "").replace(/\D/g, "");
+  if (/^923\d{9}$/.test(digits)) return digits;
+  if (/^03\d{9}$/.test(digits)) return `92${digits.slice(1)}`;
+  if (/^3\d{9}$/.test(digits)) return `92${digits}`;
+  return digits;
+}
+
 const DEAL_CFG: Record<string, { label: string; bg: string; color: string; border: string }> = {
   HOT:        { label: "🔥 Hot Deal",   bg: "#FFF7ED", color: "#C2410C", border: "#FED7AA" },
   GOOD:       { label: "✅ Good Deal",  bg: "#F0FDF4", color: "#15803D", border: "#86EFAC" },
@@ -61,16 +71,34 @@ export async function generateMetadata({ params }: { params: { id: string; local
   try {
     const listing = await prisma.listing.findUnique({
       where: { id: params.id },
-      include: { evModel: { select: { brand: true, model: true } } },
+      include: { evModel: { select: { brand: true, model: true, imageUrl: true } } },
     });
     if (!listing) return {};
     const brand = listing.evModel?.brand ?? listing.evName?.split(" ")[0] ?? "EV";
     const model = listing.evModel?.model ?? listing.evName ?? "Electric Vehicle";
     const title = `${listing.year} ${brand} ${model} for Sale in ${listing.city} — PKR ${(listing.price / 1_000_000).toFixed(2)}M | eWheelz`;
-    const desc  = `${listing.year} ${brand} ${model} in ${listing.city}${listing.mileage ? `, ${listing.mileage.toLocaleString()} km` : ""}. PKR ${(listing.price / 1_000_000).toFixed(2)}M.`;
+    const desc  = `${listing.year} ${brand} ${model} in ${listing.city}${listing.mileage ? `, ${listing.mileage.toLocaleString()} km` : ""}. PKR ${(listing.price / 1_000_000).toFixed(2)}M. Check battery risk and price fairness on eWheelz.`;
+
+    // Prefer scraped listing image → evModel image → brand fallback (all must be absolute)
+    let ogImageUrl = getBrandImage(brand); // always absolute (Unsplash)
+    const rawImages: string[] = (() => {
+      try { return listing.images ? JSON.parse(listing.images as string) : []; } catch { return []; }
+    })();
+    if (rawImages.length > 0 && rawImages[0].startsWith("http")) {
+      ogImageUrl = `${BASE}/api/image-proxy?url=${encodeURIComponent(rawImages[0])}`;
+    } else if (listing.evModel?.imageUrl?.startsWith("http")) {
+      ogImageUrl = `${BASE}/api/image-proxy?url=${encodeURIComponent(listing.evModel.imageUrl)}`;
+    }
+
     return {
       title, description: desc,
-      openGraph: { title, description: desc, images: [{ url: getBrandImage(brand), width: 1200, height: 630 }], type: "website" },
+      openGraph: {
+        title, description: desc,
+        images: [{ url: ogImageUrl, width: 1200, height: 630, alt: `${listing.year} ${brand} ${model}` }],
+        type: "website",
+        siteName: "eWheelz",
+      },
+      twitter: { card: "summary_large_image", title, description: desc, images: [ogImageUrl] },
       alternates: { canonical: `${BASE}/${params.locale}/listings/${params.id}` },
     };
   } catch { return {}; }
@@ -81,7 +109,7 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
 
   let listing: any;
   try {
-    listing = await prisma.listing.findUnique({
+    listing = await prisma.listing.findFirst({
       where:   { id: params.id, status: "ACTIVE" } as any,
       include: {
         evModel: {
@@ -105,6 +133,8 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
   const heroImg = images[0];
   const battery = gradeLabel(listing.batteryHealth);
   const dealCfg = listing.dealGrade ? DEAL_CFG[listing.dealGrade] : null;
+  const trust = getListingTrust(listing);
+  const sourceLabel = getSourceLabel(listing.source);
   const waMsg   = `Hi, I'm interested in your ${evName} (${listing.year}) listed on eWheelz for PKR ${listing.price.toLocaleString()} in ${listing.city}. Is it still available?`;
 
   // ── Similar listings (same brand, exclude current) ──────────────────────────
@@ -130,15 +160,32 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
   if (listing.city)     valuationUrl.set("city",     listing.city);
   valuationUrl.set("price", String(listing.price)); // so the valuation page shows comparison
 
-  // JSON-LD
+  // JSON-LD — image must be an absolute URL (Google can't crawl relative/proxy paths)
+  const absoluteHeroImg = heroImg.startsWith("/")
+    ? `${BASE}${heroImg}`
+    : heroImg;
+
   const jsonLd = {
-    "@context": "https://schema.org", "@type": "Vehicle",
+    "@context": "https://schema.org",
+    "@type": "Vehicle",
     name: `${listing.year} ${evName}`,
     brand: { "@type": "Brand", name: brand },
-    model, vehicleModelDate: String(listing.year),
-    mileageFromOdometer: listing.mileage ? { "@type": "QuantitativeValue", value: listing.mileage, unitCode: "KMT" } : undefined,
-    offers: { "@type": "Offer", price: listing.price, priceCurrency: "PKR", availability: "https://schema.org/InStock" },
-    image: heroImg,
+    model,
+    vehicleModelDate: String(listing.year),
+    vehicleConfiguration: listing.condition ?? "USED",
+    mileageFromOdometer: listing.mileage
+      ? { "@type": "QuantitativeValue", value: listing.mileage, unitCode: "KMT" }
+      : undefined,
+    offers: {
+      "@type": "Offer",
+      price: listing.price,
+      priceCurrency: "PKR",
+      availability: "https://schema.org/InStock",
+      url: `${BASE}/${params.locale}/listings/${params.id}`,
+      seller: { "@type": "Organization", name: "eWheelz", url: BASE },
+    },
+    image: absoluteHeroImg,
+    description: listing.description ?? `${listing.year} ${evName} for sale in ${listing.city}, PKR ${(listing.price / 1_000_000).toFixed(2)}M`,
   };
 
   return (
@@ -157,7 +204,7 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
             style={{ background: "rgba(9,11,30,0.85)", backdropFilter: "blur(10px)", border: `1px solid ${battery.color}60` }}>
             <span className="font-black text-2xl" style={{ color: battery.color }}>{battery.grade}</span>
             <div>
-              <div className="text-[9px] text-slate-400 uppercase tracking-widest">Battery</div>
+              <div className="text-[9px] text-slate-400 uppercase tracking-widest">Battery signal</div>
               <div className="text-sm text-white font-black">{battery.label}</div>
             </div>
           </div>
@@ -193,6 +240,9 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
                   📷 {images.length} photos
                 </div>
               )}
+              <div className={`mb-0.5 rounded-full border px-2 py-0.5 text-[11px] font-black ${trust.badgeClass}`}>
+                {trust.shortLabel}
+              </div>
             </div>
           </div>
         </div>
@@ -236,8 +286,9 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
                   { icon: "🛣",  label: "Mileage",   val: listing.mileage ? `${listing.mileage.toLocaleString()} km` : "Not stated" },
                   { icon: "📍", label: "City",      val: listing.city },
                   { icon: "🏷",  label: "Condition", val: listing.condition ?? "USED" },
-                  { icon: "🔋", label: "Battery",   val: battery ? `Grade ${battery.grade} — ${battery.label}` : "Not checked" },
-                  { icon: "🌐", label: "Source",    val: listing.source === "PAKWHEELS" ? "PakWheels" : listing.source === "OLX" ? "OLX" : "Direct" },
+                  { icon: "🔋", label: "Battery",   val: battery ? `Signal ${battery.grade} — ${battery.label}` : "Not checked" },
+                  { icon: "🌐", label: "Source",    val: listing.source === "MANUAL" ? "Direct" : sourceLabel },
+                  { icon: "🛡", label: "Trust",     val: trust.shortLabel },
                 ].map(({ icon, label, val }) => (
                   <div key={label} className="rounded-xl p-3" style={{ background: "#F8FAFF", border: "1px solid #EEF2FF" }}>
                     <div className="text-base mb-1">{icon}</div>
@@ -263,8 +314,8 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
                 className="rounded-2xl p-5 flex flex-col gap-2 transition-all hover:scale-[1.02] hover:shadow-md"
                 style={{ background: "#F0FDF4", border: "2px solid #86EFAC" }}>
                 <span className="text-2xl">🔋</span>
-                <div className="text-sm font-black text-green-800">Check Battery Health</div>
-                <div className="text-xs text-green-600">Free diagnostic in 2 min</div>
+                <div className="text-sm font-black text-green-800">Estimate Battery Risk</div>
+                <div className="text-xs text-green-600">Free pre-check before inspection</div>
               </Link>
               <Link
                 href={`/${locale}/ev-valuation?${valuationUrl.toString()}`}
@@ -276,12 +327,25 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
               </Link>
             </div>
 
-            {/* External source link */}
+            {/* Attribution card */}
             {listing.sourceUrl && (
-              <a href={listing.sourceUrl} target="_blank" rel="noopener noreferrer"
-                className="flex items-center gap-2 text-xs text-slate-400 hover:text-slate-600 transition-colors">
-                <span>View original listing on {listing.source === "PAKWHEELS" ? "PakWheels" : "OLX"} ↗</span>
-              </a>
+              <div className="rounded-xl p-4 flex items-start gap-3" style={{ background: "#F8FAFF", border: "1px solid #E6E9F2" }}>
+                <span className="text-2xl flex-shrink-0">🤝</span>
+                <div>
+                  <div className="text-xs font-black text-slate-700 mb-1">
+                    {trust.isSourceOnly ? `Source-only listing from ${sourceLabel}` : `Original source: ${sourceLabel}`}
+                  </div>
+                  <p className="text-[11px] text-slate-400 leading-relaxed mb-2">
+                    {trust.isSourceOnly
+                      ? "eWheelz has not verified this seller. Use the original post, confirm ownership, and inspect battery health before token or transfer."
+                      : "This listing keeps the original source link for reference. Still confirm documents and inspect battery health before token or transfer."}
+                  </p>
+                  <a href={listing.sourceUrl} target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-600 hover:text-indigo-700 transition-colors">
+                    See original post on {sourceLabel} ↗
+                  </a>
+                </div>
+              </div>
             )}
           </div>
 
@@ -290,20 +354,38 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
 
             {/* Contact card */}
             <div className="rounded-2xl p-5" style={{ background: "#0F172A", border: "1px solid #1E293B" }}>
-              <div className="text-[10px] font-black uppercase tracking-widest text-green-400 mb-4">Contact Seller</div>
-              {listing.contactWhatsapp || listing.contactPhone ? (
-                <a href={`https://wa.me/${(listing.contactWhatsapp ?? listing.contactPhone ?? "").replace(/\D/g, "")}?text=${encodeURIComponent(waMsg)}`}
+              <div className="text-[10px] font-black uppercase tracking-widest text-green-400 mb-2">
+                {trust.canContactSeller ? "Contact Seller" : "Source Listing"}
+              </div>
+              <p className="mb-4 text-[11px] leading-relaxed text-slate-400">{trust.description}</p>
+              {trust.canContactSeller ? (
+                <TrackA
+                  href={`https://wa.me/${normalizeWhatsappNumber(listing.contactWhatsapp ?? listing.contactPhone)}?text=${encodeURIComponent(waMsg)}`}
                   target="_blank" rel="noopener noreferrer"
+                  event="seller_whatsapp_click"
+                  trackProps={{ listing_id: listing.id, brand, model, price: listing.price, city: listing.city, source: "listing_detail" }}
                   className="w-full flex items-center justify-center gap-2.5 py-3.5 rounded-xl text-sm font-black text-white transition-all hover:opacity-90 active:scale-[0.98]"
                   style={{ background: "#25D366" }}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
                   </svg>
                   WhatsApp Seller
-                </a>
+                </TrackA>
+              ) : listing.sourceUrl ? (
+                <TrackA
+                  href={listing.sourceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  event="source_listing_click"
+                  trackProps={{ listing_id: listing.id, brand, model, price: listing.price, city: listing.city, source: listing.source }}
+                  className="w-full flex items-center justify-center gap-2.5 py-3.5 rounded-xl text-sm font-black transition-all hover:opacity-90 active:scale-[0.98]"
+                  style={{ background: "#F8FAFC", color: "#334155" }}
+                >
+                  Open Original Post
+                </TrackA>
               ) : (
                 <div className="text-center py-3">
-                  <p className="text-xs text-slate-400">Contact details available on request</p>
+                  <p className="text-xs text-slate-400">No direct contact available yet</p>
                 </div>
               )}
               <p className="text-[10px] text-slate-500 mt-3 text-center leading-relaxed">
@@ -382,7 +464,7 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
             <div className="rounded-2xl p-4" style={{ background: "#fff", border: "1px solid #E6E9F2" }}>
               <div className="text-xs font-black text-slate-700 mb-3">Before you buy</div>
               {[
-                "Verify battery health via our free tool",
+                "Treat battery signal as estimate until inspection",
                 "Check if price is fair vs market",
                 "Request OBD-II scan report",
                 "Meet at a public location",
@@ -399,4 +481,3 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
     </div>
   );
 }
-

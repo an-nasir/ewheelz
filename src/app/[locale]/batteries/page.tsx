@@ -2,6 +2,8 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "EV Battery Database — LFP vs NMC vs Blade",
   description: "Compare EV battery chemistry — LFP Blade, NMC, LFP. Which survives Pakistan's 45°C heat?",
@@ -166,76 +168,92 @@ export default async function BatteriesPage() {
           </div>
         </div>
 
-        {/* ── Full Battery Table ── */}
-        <div style={{ background: "#FFFFFF", border: "1px solid #E6E9F2", borderRadius: "16px", overflow: "hidden", boxShadow: "0 2px 8px rgba(15,23,42,0.06)" }}>
-          <div className="px-5 py-4 flex items-center justify-between" style={{ borderBottom: "1px solid #E6E9F2" }}>
-            <h2 className="font-bold text-slate-900">All Battery Packs</h2>
-            <span className="text-xs text-slate-500">Sorted by capacity</span>
+        {/* ── Battery Pack Cards ── */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-bold text-slate-900 text-base">All Battery Packs</h2>
+            <span className="text-xs text-slate-400">Sorted by capacity · {batteries.length} tracked</span>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm min-w-[700px]">
-              <thead>
-                <tr style={{ background: "#F6F8FF", borderBottom: "1px solid #E6E9F2" }}>
-                  {["EV Model", "Chemistry", "Capacity", "Voltage", "Cooling", "Cycle Life", "Warranty", "Price PKR"].map((h, i) => (
-                    <th key={h} className={`px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide ${i > 1 ? "text-right" : "text-left"}`}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {batteries.map((b) => {
-                  const chemGroup = b.chemistry?.includes("Blade") ? "LFP Blade"
-                    : b.chemistry?.includes("NMC") || b.chemistry === "NMC" ? "NMC"
-                    : "LFP";
-                  const cs = CHEM_STYLES[chemGroup] ?? CHEM_STYLES["LFP"];
-                  return (
-                    <tr key={b.id} className="transition-colors hover:bg-[#F6F8FF]"
-                      style={{ borderBottom: "1px solid #E6E9F2" }}>
-                      <td className="px-5 py-3.5">
+
+          <div className="space-y-3">
+            {batteries.map((b) => {
+              const chemGroup = b.chemistry?.includes("Blade") ? "LFP Blade"
+                : b.chemistry?.includes("NMC") || b.chemistry === "NMC" ? "NMC"
+                : "LFP";
+              const cs = CHEM_STYLES[chemGroup] ?? CHEM_STYLES["LFP"];
+              const accentColor = chemGroup === "LFP Blade" ? "#16A34A" : chemGroup === "NMC" ? "#7C3AED" : "#2563EB";
+              return (
+                <div key={b.id} className="rounded-2xl p-4 sm:p-5 transition-all hover:shadow-md"
+                  style={{ background: "#FFFFFF", border: "1px solid #E6E9F2", borderLeft: `4px solid ${accentColor}` }}>
+
+                  <div className="flex items-start justify-between gap-4 flex-wrap">
+
+                    {/* Left: model + chemistry */}
+                    <div className="flex items-start gap-3 flex-1 min-w-0">
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-lg"
+                        style={{ background: `${accentColor}12`, border: `1px solid ${accentColor}22` }}>
+                        🔋
+                      </div>
+                      <div className="min-w-0">
                         <Link href={`/ev/${b.evModel.slug}`}
-                          className="font-medium text-slate-900 hover:text-indigo-600 transition-colors">
+                          className="font-black text-slate-900 hover:text-indigo-600 transition-colors text-sm leading-tight block">
                           {b.evModel.brand} {b.evModel.model}
                         </Link>
-                        {b.evModel.availableInPk && (
-                          <span className="ml-2 text-[10px] font-semibold text-green-600">PK ✓</span>
-                        )}
-                      </td>
-                      <td className="px-5 py-3.5">
-                        <span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full font-medium"
-                          style={{ cssText: cs.badge } as React.CSSProperties}>
-                          <span className="w-1.5 h-1.5 rounded-full" style={{ background: cs.dot }} />
-                          {b.chemistry}
-                        </span>
-                      </td>
-                      <td className="px-5 py-3.5 text-right font-bold text-slate-900">
-                        {b.capacityKwh ? `${b.capacityKwh} kWh` : "—"}
-                      </td>
-                      <td className="px-5 py-3.5 text-right text-slate-600">
-                        {b.voltage ? `${b.voltage}V` : "—"}
-                      </td>
-                      <td className="px-5 py-3.5">
-                        <span className={`text-xs font-medium ${b.thermalManagement === "liquid" ? "text-green-600" : "text-slate-500"}`}>
-                          {b.thermalManagement || "—"}
-                        </span>
-                      </td>
-                      <td className="px-5 py-3.5 text-right text-slate-600">
-                        {b.cycleLife ? b.cycleLife.toLocaleString() : "—"}
-                      </td>
-                      <td className="px-5 py-3.5 text-right text-slate-600">
-                        {b.warrantyYears ? `${b.warrantyYears} yr` : "—"}
-                      </td>
-                      <td className="px-5 py-3.5 text-right">
-                        {b.evModel.pricePkrMin ? (
-                          <span className="font-black text-sm"
-                            style={{ background: "linear-gradient(135deg,#22C55E,#10B981)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
-                            {(b.evModel.pricePkrMin / 1_000_000).toFixed(1)}M
+                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                          <span className="inline-flex items-center gap-1.5 text-[11px] px-2 py-0.5 rounded-full font-semibold"
+                            style={{ cssText: cs.badge } as React.CSSProperties}>
+                            <span className="w-1.5 h-1.5 rounded-full" style={{ background: cs.dot }} />
+                            {b.chemistry}
                           </span>
-                        ) : "—"}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                          {b.evModel.availableInPk && (
+                            <span className="text-[10px] font-black text-green-600 px-2 py-0.5 rounded-full"
+                              style={{ background: "#F0FDF4", border: "1px solid #86EFAC" }}>
+                              🇵🇰 Available in PK
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right: price */}
+                    {b.evModel.pricePkrMin && (
+                      <div className="text-right shrink-0">
+                        <div className="text-[10px] text-slate-400 uppercase tracking-wider mb-0.5">Starting from</div>
+                        <div className="font-black text-base"
+                          style={{ background: "linear-gradient(135deg,#22C55E,#10B981)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
+                          PKR {(b.evModel.pricePkrMin / 1_000_000).toFixed(1)}M
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Stats row */}
+                  <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {[
+                      { icon: "⚡", label: "Capacity",   val: b.capacityKwh ? `${b.capacityKwh} kWh` : null },
+                      { icon: "🔌", label: "Voltage",    val: b.voltage     ? `${b.voltage}V`          : null },
+                      { icon: "🔄", label: "Cycle Life", val: b.cycleLife   ? `${b.cycleLife.toLocaleString()} cycles` : null },
+                      { icon: "🛡",  label: "Warranty",  val: b.warrantyYears ? `${b.warrantyYears} years` : null },
+                    ].filter(s => s.val).map(({ icon, label, val }) => (
+                      <div key={label} className="rounded-xl px-3 py-2"
+                        style={{ background: "#F8FAFF", border: "1px solid #EEF2FF" }}>
+                        <div className="text-[10px] text-slate-400 uppercase tracking-wider mb-0.5">{icon} {label}</div>
+                        <div className="text-xs font-black text-slate-800">{val}</div>
+                      </div>
+                    ))}
+                    {b.thermalManagement && (
+                      <div className="rounded-xl px-3 py-2"
+                        style={{ background: b.thermalManagement === "liquid" ? "#F0FDF4" : "#F8FAFF", border: b.thermalManagement === "liquid" ? "1px solid #86EFAC" : "1px solid #EEF2FF" }}>
+                        <div className="text-[10px] text-slate-400 uppercase tracking-wider mb-0.5">❄️ Cooling</div>
+                        <div className={`text-xs font-black ${b.thermalManagement === "liquid" ? "text-green-700" : "text-slate-600"}`}>
+                          {b.thermalManagement === "liquid" ? "Liquid ✓" : b.thermalManagement}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
 

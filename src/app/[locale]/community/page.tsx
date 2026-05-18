@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import CommunityClient from "./CommunityClient";
 import { communityDb } from "@/lib/communityDb";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "EV Community Hub Pakistan — Real-World Data & Leaderboard",
   description:

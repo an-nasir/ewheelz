@@ -3,6 +3,8 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { estimateRange } from "@/lib/rangeEstimator";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Compare EVs in Pakistan — Side-by-Side Specs & Range",
   description: "Compare electric vehicles available in Pakistan. Side-by-side battery, range, performance, and charging specs.",
@@ -25,7 +27,6 @@ function brandStyle(brand: string) {
   return BRAND_GRADIENTS[brand] ?? { bg: "linear-gradient(135deg,#EEF2FF,#E0E7FF)", accent: "#4F46E5", border: "#A5B4FC" };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function getBestIdx(models: any[], getNum: (m: any) => number | null | undefined, mode: "max" | "min"): number {
   const nums = models.map(m => getNum(m) ?? null);
   const valid = nums.filter((n): n is number => n !== null);
@@ -34,7 +35,6 @@ function getBestIdx(models: any[], getNum: (m: any) => number | null | undefined
   return nums.indexOf(best);
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function Row({ label, models, getValue, highlight, getNum }: {
   label: string; models: any[];
   getValue: (m: any) => string;
@@ -67,7 +67,6 @@ function Row({ label, models, getValue, highlight, getNum }: {
   );
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function Section({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <>
@@ -99,10 +98,8 @@ export default async function ComparePage({ searchParams }: Props) {
       })
     : [];
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const models = slugs.map(s => rawModels.find((m: any) => m.slug === s)).filter(Boolean) as typeof rawModels;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const rangeEstimates = models.map((m: any) => {
     const batt = m.battery?.capacityKwh ?? m.specs?.batteryCapKwh;
     const wltp = m.specs?.rangeWltp ?? m.specs?.rangeRealWorld;

@@ -28,7 +28,7 @@ export default function PrivacyPage() {
 
         <section>
           <h2 className="text-base font-black text-slate-900 mb-3">1. Who We Are</h2>
-          <p>eWheelz is Pakistan's verified electric vehicle marketplace, operated by eWheelz (Pvt) Limited. Our platform is available at <strong>ewheelz.pk</strong> and via our mobile application. When we say "eWheelz", "we", "us" or "our", we mean eWheelz (Pvt) Limited.</p>
+          <p>eWheelz is Pakistan&apos;s verified electric vehicle marketplace, operated by eWheelz (Pvt) Limited. Our platform is available at <strong>ewheelz.pk</strong> and via our mobile application. When we say &quot;eWheelz&quot;, &quot;we&quot;, &quot;us&quot; or &quot;our&quot;, we mean eWheelz (Pvt) Limited.</p>
           <p className="mt-2">This Privacy Policy explains what personal data we collect when you use our website or mobile app, why we collect it, and what we do with it. Please read it carefully.</p>
         </section>
 
@@ -156,7 +156,7 @@ export default function PrivacyPage() {
           <div className="rounded-2xl p-6 flex flex-col sm:flex-row gap-4" style={{ background: "#0F172A", border: "1px solid #1E293B" }}>
             <div className="flex-1">
               <div className="font-black text-white mb-1">eWheelz (Pvt) Limited</div>
-              <div className="text-slate-400 text-xs">Pakistan's EV Marketplace</div>
+              <div className="text-slate-400 text-xs">Pakistan&apos;s EV Marketplace</div>
             </div>
             <div className="flex flex-col gap-2">
               <a href="mailto:hello@ewheelz.pk" className="text-sm text-indigo-400 hover:text-indigo-300">hello@ewheelz.pk</a>

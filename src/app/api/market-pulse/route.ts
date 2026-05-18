@@ -4,7 +4,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-export const revalidate = 600;
+export const dynamic = "force-dynamic";
 
 const BRANDS = ["BYD", "MG", "Hyundai", "Changan", "Deepal", "Xpeng", "Tesla"];
 

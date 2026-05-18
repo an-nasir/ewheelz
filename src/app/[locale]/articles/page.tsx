@@ -5,6 +5,8 @@ import { prisma } from "@/lib/prisma";
 import { Article } from "@/types";
 import NewsletterWidget from "@/components/NewsletterWidget";
 
+export const dynamic = "force-dynamic";
+
 // ── RSS news fetcher (server-side, cached 1h) ─────────────────────────────────
 const EV_KEYWORDS = ["electric", "EV", "BYD", "Tesla", "MG ZS", "Hyundai", "battery", "charging", "hybrid", "PHEV", "Deepal", "Changan", "Xpeng", "electric car", "electric vehicle"];
 
@@ -188,15 +190,27 @@ export default async function ArticlesPage({ searchParams }: { searchParams: { c
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(105deg,rgba(9,11,30,0.97) 0%,rgba(15,23,42,0.90) 55%,rgba(15,23,42,0.5) 100%)" }} />
         <div>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-14 relative z-10">
-            <div className="inline-flex items-center gap-2 mb-4 px-3 py-1.5 rounded-full text-xs font-black uppercase tracking-widest"
-              style={{ background: "rgba(99,102,241,0.18)", color: "#A5B4FC", border: "1px solid rgba(99,102,241,0.35)" }}>
-              📖 EV Knowledge Hub
+
+            {/* Live stats strip */}
+            <div className="flex flex-wrap items-center gap-3 mb-6">
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full"
+                style={{ background: "rgba(99,102,241,0.18)", border: "1px solid rgba(99,102,241,0.35)" }}>
+                <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                <span className="text-[11px] font-black text-indigo-300 uppercase tracking-widest">Live News</span>
+              </div>
+              {allArticles.length > 0 && (
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
+                  style={{ background: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.25)" }}>
+                  <span className="text-[11px] font-semibold text-green-400">{allArticles.length} in-house guides</span>
+                </div>
+              )}
             </div>
+
             <h1 className="text-4xl sm:text-5xl font-black text-white mb-3 leading-tight">
-              EV Guides &amp; Articles
+              EV News &amp; Guides
             </h1>
             <p className="text-slate-400 text-lg mb-6 max-w-xl">
-              Expert analysis, comparisons, and ownership guides for Pakistan EV buyers
+              In-house EV guides + live news from Dawn, Electrek &amp; more — everything Pakistan EV buyers need to know
             </p>
 
             {/* Category filter pills */}
@@ -277,15 +291,59 @@ export default async function ArticlesPage({ searchParams }: { searchParams: { c
         {/* ── Live EV News Stream ── */}
         {liveNews.length > 0 && (
           <div className="mb-8">
-            <div className="flex items-center gap-2 mb-4">
-              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-              <span className="text-xs font-black text-slate-600 uppercase tracking-widest">Live EV News</span>
-              <span className="text-xs text-slate-400">— auto-updated from Dawn, Electrek, InsideEVs &amp; more</span>
+            {/* Section header */}
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center text-base"
+                  style={{ background: "linear-gradient(135deg,#FEF2F2,#FEE2E2)", border: "1px solid #FECACA" }}>
+                  📡
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                    <span className="text-sm font-black text-slate-900">Live EV News</span>
+                  </div>
+                  <p className="text-[11px] text-slate-400">Auto-pulled from Dawn, Electrek, InsideEVs &amp; more · refreshed hourly</p>
+                </div>
+              </div>
+              <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-semibold"
+                style={{ background: "#FEF2F2", color: "#DC2626", border: "1px solid #FECACA" }}>
+                🇵🇰 + 🌍 sources
+              </div>
             </div>
+
+            {/* Featured first item — full width */}
+            {liveNews[0] && (
+              <a href={liveNews[0].link} target="_blank" rel="noopener noreferrer"
+                className="group block rounded-2xl p-5 mb-3 hover:shadow-lg transition-all"
+                style={{ background: "linear-gradient(135deg,#0F172A,#1E293B)", border: "1px solid #334155" }}>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-sm">{liveNews[0].flag}</span>
+                  <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full"
+                    style={{ background: "rgba(239,68,68,0.2)", color: "#F87171", border: "1px solid rgba(239,68,68,0.3)" }}>
+                    {liveNews[0].source}
+                  </span>
+                  <span className="text-[10px] text-slate-500 ml-auto">
+                    {liveNews[0].pubDate ? new Date(liveNews[0].pubDate).toLocaleDateString("en-PK", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : ""}
+                  </span>
+                </div>
+                <h3 className="text-base font-black text-white leading-snug mb-2 group-hover:text-indigo-300 transition-colors line-clamp-2">
+                  {liveNews[0].title}
+                </h3>
+                {liveNews[0].excerpt && (
+                  <p className="text-sm text-slate-400 leading-relaxed line-clamp-2 mb-3">{liveNews[0].excerpt}</p>
+                )}
+                <div className="text-xs font-black text-indigo-400 group-hover:text-indigo-300 transition-colors">
+                  Read on {liveNews[0].source} ↗
+                </div>
+              </a>
+            )}
+
+            {/* Rest: 3-col grid */}
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {liveNews.map((item, i) => (
+              {liveNews.slice(1).map((item, i) => (
                 <a key={i} href={item.link} target="_blank" rel="noopener noreferrer"
-                  className="group rounded-xl p-4 flex flex-col gap-2 hover:shadow-md transition-all"
+                  className="group rounded-xl p-4 flex flex-col gap-2 hover:shadow-md hover:-translate-y-0.5 transition-all"
                   style={{ background: "#fff", border: "1px solid #E6E9F2" }}>
                   <div className="flex items-center gap-1.5">
                     <span className="text-xs">{item.flag}</span>
@@ -302,7 +360,7 @@ export default async function ArticlesPage({ searchParams }: { searchParams: { c
                   {item.excerpt && (
                     <div className="text-xs text-slate-400 leading-relaxed line-clamp-2">{item.excerpt}</div>
                   )}
-                  <div className="text-xs font-bold text-indigo-500 mt-auto opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="text-xs font-bold text-indigo-500 mt-auto pt-1 border-t border-[#F1F5F9] opacity-0 group-hover:opacity-100 transition-opacity">
                     Read on {item.source} →
                   </div>
                 </a>
@@ -313,19 +371,26 @@ export default async function ArticlesPage({ searchParams }: { searchParams: { c
 
         {/* Topics Guide */}
         <div className="mb-6 rounded-2xl p-6" style={{ background: "#FFFFFF", border: "1px solid #E6E9F2" }}>
-          <h2 className="text-base font-bold text-slate-900 mb-4">Browse by Topic</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <h2 className="text-base font-bold text-slate-900 mb-4">Explore by Topic</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
             {[
-              { emoji: "🔋", label: "Battery Chemistry", href: "/batteries", bg: "linear-gradient(135deg,#F0FDF4,#DCFCE7)", color: "#16A34A", border: "#86EFAC" },
-              { emoji: "⚡", label: "Charging Stations",  href: "/charging",  bg: "linear-gradient(135deg,#FFFBEB,#FEF3C7)", color: "#B45309", border: "#FCD34D" },
-              { emoji: "⚖️", label: "EV Comparisons",    href: "/compare",   bg: "linear-gradient(135deg,#F5F3FF,#EDE9FE)", color: "#7C3AED", border: "#C4B5FD" },
+              { emoji: "🔋", label: "Battery Guide",     href: "/batteries", bg: "linear-gradient(135deg,#F0FDF4,#DCFCE7)", color: "#16A34A", border: "#86EFAC", badge: "Must Read" },
+              { emoji: "⚡", label: "Charging Map",       href: "/charging-map", bg: "linear-gradient(135deg,#FFFBEB,#FEF3C7)", color: "#B45309", border: "#FCD34D" },
+              { emoji: "⚖️", label: "Compare EVs",       href: "/compare",   bg: "linear-gradient(135deg,#F5F3FF,#EDE9FE)", color: "#7C3AED", border: "#C4B5FD" },
               { emoji: "🚗", label: "EV Database",        href: "/ev",        bg: "linear-gradient(135deg,#EEF2FF,#E0E7FF)", color: "#4F46E5", border: "#A5B4FC" },
+              { emoji: "📦", label: "Import Duty",        href: "/import-duty", bg: "linear-gradient(135deg,#FFF7ED,#FEF3C7)", color: "#C2410C", border: "#FDBA74" },
             ].map(t => (
               <Link key={t.href} href={t.href}
-                className="group flex flex-col items-center gap-2 p-4 rounded-xl text-center hover-lift-sm"
+                className="group flex flex-col items-center gap-2 p-4 rounded-xl text-center transition-all hover:-translate-y-0.5 hover:shadow-sm relative"
                 style={{ background: t.bg, border: `1px solid ${t.border}` }}>
+                {t.badge && (
+                  <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-[8px] font-black px-2 py-0.5 rounded-full text-white whitespace-nowrap"
+                    style={{ background: "linear-gradient(135deg,#6366F1,#8B5CF6)" }}>
+                    {t.badge}
+                  </span>
+                )}
                 <span className="text-2xl">{t.emoji}</span>
-                <span className="text-xs font-semibold" style={{ color: t.color }}>{t.label}</span>
+                <span className="text-xs font-semibold leading-tight" style={{ color: t.color }}>{t.label}</span>
               </Link>
             ))}
           </div>

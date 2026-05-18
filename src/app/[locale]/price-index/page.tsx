@@ -6,6 +6,8 @@ import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { Link } from "@/navigation";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Pakistan EV Price Index — Live Prices April 2026 | eWheelz",
   description: "Live EV price trends in Pakistan. BYD, MG, Hyundai, Tesla average prices and 6-month trend charts. Updated hourly from real listings.",
@@ -219,8 +221,8 @@ export default async function PriceIndexPage() {
                   </div>
                   <div className="px-4 pt-3 pb-1">
                     <div className="flex items-end justify-between mb-1">
-                      <span className="text-[9px] text-slate-400">Nov '25</span>
-                      <span className="text-[9px] text-slate-400">Apr '26</span>
+                      <span className="text-[9px] text-slate-400">Nov &apos;25</span>
+                      <span className="text-[9px] text-slate-400">Apr &apos;26</span>
                     </div>
                     <Sparkline values={hist} color={color} width={240} height={52} />
                   </div>

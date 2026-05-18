@@ -37,9 +37,10 @@ export async function generateMetadata({
 }
 
 // ─── Static params ────────────────────────────────────────────────────────────
+export const dynamicParams = true;
+
 export async function generateStaticParams() {
-  const evs = await prisma.evModel.findMany({ where: {} });
-  return evs.map((ev: { slug: string }) => ({ slug: ev.slug }));
+  return [];
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

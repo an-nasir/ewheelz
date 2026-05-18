@@ -3,10 +3,10 @@
 // POST /api/admin/seed-listings — requires x-admin-key header
 
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { randomBytes } from "crypto";
 
-const ADMIN_KEY = process.env.ADMIN_API_KEY ?? "";
+import { requireAdmin } from "@/lib/adminAuth";
+import { prisma } from "@/lib/prisma";
 
 const CITIES = ["Lahore", "Karachi", "Islamabad", "Rawalpindi", "Peshawar", "Faisalabad", "Multan", "Quetta"];
 const WA_PREFIXES = ["923001", "923011", "923021", "923031", "923041", "923051", "923061", "923071", "923321", "923331", "923341", "923444", "923001"];
@@ -40,7 +40,7 @@ const LISTINGS_DATA = [
 
 const DESCRIPTIONS = [
   "Single owner, all original parts, no accidents. Full service history available. Genuine sale, serious buyers only.",
-  "Imported from China, personal baggage scheme. All taxes paid, documented. Battery health verified by dealer.",
+  "Imported unit, taxes documented by seller. Battery health claimed by dealer; buyer should verify.",
   "Company maintained vehicle. All documentation complete. Non-negotiable price — market checked.",
   "Owner moving abroad. Urgent sale. Price slightly negotiable for immediate deal. WhatsApp preferred.",
   "Excellent condition, no dents, original paint. New tyres fitted last month. Can arrange inspection.",
@@ -58,9 +58,14 @@ const SELLER_NAMES = [
 ];
 
 export async function POST(req: NextRequest) {
-  const key = req.headers.get("x-admin-key") ?? "";
-  if (ADMIN_KEY && key !== ADMIN_KEY) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const authError = requireAdmin(req);
+  if (authError) return authError;
+
+  if (process.env.ALLOW_DEMO_SEED !== "true") {
+    return NextResponse.json(
+      { error: "Demo listing seeding is disabled. Set ALLOW_DEMO_SEED=true only in disposable dev/staging environments." },
+      { status: 403 },
+    );
   }
 
   // Check how many listings already exist
@@ -103,8 +108,9 @@ export async function POST(req: NextRequest) {
             contactName:    name,
             contactWhatsapp: wa,
             contactPhone:   wa,
-            status:         "ACTIVE",
-            source:         i % 2 === 0 ? "PAKWHEELS" : "OLX",
+            status:         "PENDING",
+            source:         "DEMO",
+            verifiedSeller: false,
             sellerToken:    sellerToken(),
           } as any,
         });

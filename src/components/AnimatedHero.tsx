@@ -22,10 +22,10 @@ export default function AnimatedHero({ totalListings = 0 }: Props) {
         background: "linear-gradient(105deg, rgba(9,11,30,0.96) 0%, rgba(15,23,42,0.88) 42%, rgba(15,23,42,0.55) 70%, rgba(15,23,42,0.15) 100%)",
       }} />
 
-      {/* Bottom fade — transitions into the light section below */}
+      {/* Bottom fade — melts into the dark zone below */}
       <div style={{
-        position: "absolute", bottom: 0, left: 0, right: 0, height: "60px",
-        background: "linear-gradient(to top, #ffffff, transparent)",
+        position: "absolute", bottom: 0, left: 0, right: 0, height: "80px",
+        background: "linear-gradient(to top, #0F172A, transparent)",
       }} />
 
       <div className="relative max-w-5xl mx-auto px-4 sm:px-6 py-16 sm:py-20 lg:py-24">
@@ -49,7 +49,7 @@ export default function AnimatedHero({ totalListings = 0 }: Props) {
           </h1>
 
           <p className="text-slate-300 text-sm sm:text-base mb-7 leading-relaxed">
-            Battery grades on every listing. Real market prices.<br />
+            Battery risk signals where available. Confidence-scored prices.<br />
             Paste any OLX ad — get an instant deal verdict.
           </p>
 
@@ -70,7 +70,7 @@ export default function AnimatedHero({ totalListings = 0 }: Props) {
           <div className="flex gap-8 pt-5" style={{ borderTop: "1px solid rgba(255,255,255,0.10)" }}>
             {[
               { val: totalListings > 0 ? `${totalListings}+` : "Live", label: "Active Listings" },
-              { val: "A–F",  label: "Battery Grades" },
+              { val: "A–F",  label: "Risk Signals" },
               { val: "Free", label: "To List & Search" },
             ].map(({ val, label }) => (
               <div key={label}>
@@ -83,7 +83,7 @@ export default function AnimatedHero({ totalListings = 0 }: Props) {
 
         {/* Floating cards — desktop only, positioned right */}
         <div className="absolute right-6 top-1/2 -translate-y-1/2 hidden lg:flex flex-col gap-3">
-          {/* Battery grade */}
+          {/* Battery signal */}
           <div className="rounded-2xl px-4 py-3 flex items-center gap-3"
             style={{ background: "rgba(9,11,30,0.88)", backdropFilter: "blur(16px)", border: "1px solid rgba(34,197,94,0.35)", boxShadow: "0 8px 32px rgba(0,0,0,0.5)" }}>
             <div className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-xl shrink-0"
@@ -91,7 +91,7 @@ export default function AnimatedHero({ totalListings = 0 }: Props) {
               A
             </div>
             <div>
-              <div className="text-[10px] text-green-400 font-black uppercase tracking-widest">Battery Grade</div>
+              <div className="text-[10px] text-green-400 font-black uppercase tracking-widest">Battery Signal</div>
               <div className="text-sm text-white font-black">Excellent · 95%</div>
             </div>
           </div>
@@ -104,11 +104,11 @@ export default function AnimatedHero({ totalListings = 0 }: Props) {
             <div className="text-xs text-emerald-400 font-bold mt-0.5">↓ 12% below avg · Fair deal</div>
           </div>
 
-          {/* Verified */}
+          {/* Reviewed */}
           <div className="rounded-xl px-3 py-2 flex items-center gap-2"
             style={{ background: "rgba(99,102,241,0.18)", backdropFilter: "blur(8px)", border: "1px solid rgba(99,102,241,0.35)" }}>
             <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-            <span className="text-xs text-white font-black">eWheelz Verified</span>
+            <span className="text-xs text-white font-black">eWheelz Reviewed</span>
           </div>
         </div>
       </div>

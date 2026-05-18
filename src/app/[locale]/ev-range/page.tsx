@@ -4,6 +4,8 @@ import { prisma } from '@/lib/prisma';
 import { estimateRange } from '@/lib/rangeEstimator';
 import type { Metadata } from 'next';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'EV Range Reality Index Pakistan — Real-World Range Estimates',
   description:

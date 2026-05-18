@@ -23,7 +23,7 @@ export async function generateMetadata({ params }: { params: { brand: string } }
   const meta = BRAND_META[params.brand.toLowerCase()];
   if (!meta) return {};
   const title = `${meta.displayName} Electric Car Price in Pakistan 2026 — Used & New | eWheelz`;
-  const desc  = `Buy or sell used ${meta.displayName} electric cars in Pakistan. Check latest prices, battery health grades, and real market data on eWheelz.`;
+  const desc  = `Buy or sell used ${meta.displayName} electric cars in Pakistan. Check latest prices, battery risk signals, and market data on eWheelz.`;
   return {
     title,
     description: desc,
@@ -172,8 +172,8 @@ export default async function BrandPage({ params }: { params: { brand: string } 
           <div className="space-y-3">
             {[
               { q: `What is the price of ${meta.displayName} electric car in Pakistan?`, a: stats._min.price ? `Used ${meta.displayName} EVs start from PKR ${(stats._min.price / 1_000_000).toFixed(1)}M on eWheelz. New ${meta.displayName} models range from PKR ${(stats._min.price / 1_000_000).toFixed(1)}M to ${((stats._avg.price ?? stats._min.price * 1.5) / 1_000_000).toFixed(1)}M depending on variant.` : `Check current listings on eWheelz for the latest ${meta.displayName} prices in Pakistan.` },
-              { q: `Is ${meta.displayName} EV available in Pakistan?`, a: `Yes. ${meta.displayName} electric vehicles are officially available in Pakistan through authorised dealers. Used ${meta.displayName} EVs are also available on eWheelz with battery health grades on every listing.` },
-              { q: `How do I check battery health of a used ${meta.displayName}?`, a: `Use eWheelz Battery Health Check — enter the car details and odometer reading to get an A–F grade in 30 seconds. Always ask the seller for current range on a full charge before buying.` },
+              { q: `Is ${meta.displayName} EV available in Pakistan?`, a: `Yes. ${meta.displayName} electric vehicles are officially available in Pakistan through authorised dealers. Used ${meta.displayName} EVs are also tracked on eWheelz with battery risk signals where data is available.` },
+              { q: `How do I check battery health of a used ${meta.displayName}?`, a: `Use eWheelz Battery Health Check as a pre-screen, then ask the seller for current range on full charge and OBD evidence before buying.` },
             ].map(({ q, a }) => (
               <div key={q} className="rounded-xl p-4" style={{ background: "#fff", border: "1px solid #E6E9F2" }}>
                 <div className="font-black text-slate-900 text-sm mb-1">{q}</div>

@@ -1,63 +1,90 @@
-🏎️ eWheelz — AI Operating System (v2.0)
-🎯 Core Mission
-Build Pakistan’s #1 EV marketplace by solving the "Trust Gap" through Battery Health Grading and WhatsApp-first commerce.
+# eWheelz Agent Context
 
-🏗️ Technical Stack
-Web: Next.js 15 (App Router), TypeScript, Tailwind, Framer Motion.
+Use this file as the primary source of truth for Claude and other coding agents.
 
-Mobile: Expo (React Native) — Shared logic in src/lib.
+## Mission
 
-Database: Neon PostgreSQL (Primary), Prisma ORM.
+Build Pakistan's EV-only marketplace and buyer-intelligence platform.
 
-Auth/Analytics: NextAuth, Mapbox, PostHog.
+The business priority is marketplace trust and liquidity:
 
-Bot: Custom NLP Engine for WhatsApp integration.
+1. Real EV inventory.
+2. Verified or clearly labeled WhatsApp seller/dealer access.
+3. Battery-risk and price-confidence intelligence.
+4. Buyer leads for sellers/dealers.
+5. Public proof through market snapshots.
 
-🧠 Developer Persona & Behavior
-You are a Senior Full-Stack Engineer specializing in Pakistani Auto-Tech.
+Do not prioritize more calculators, subscriptions, or polish until listings and leads are moving.
 
-Skeptical of Fluff: Reject "Quizzes" or "Guides." Obsess over "Utility" (Price accuracy, WhatsApp conversion).
+## Product Rules
 
-Surgical Edits: Do not rewrite whole files. Use targeted function updates to save tokens.
+- eWheelz is not a generic car marketplace. It is an EV trust layer: battery risk, deal quality, seller contact quality, and Pakistan-specific EV context.
+- Supply beats features. Real listings and seller conversations matter more than new UI surface.
+- WhatsApp is the primary conversion path. Forms are secondary and should be easy to translate into chat flows.
+- Any feature should directly improve listings, buyer trust, WhatsApp leads, or public market proof.
+- Avoid fake production data. Scraped, seeded, manual, and user-submitted records must be clearly sourced.
 
-Context First: Always grep or ls before writing code to avoid duplicating existing utilities in src/lib.
+## Current Stack
 
-Workflow: Always run /compact after a successful feature. Run npm run build to verify types before finishing.
+- Web: Next.js 14 App Router, React 18, TypeScript, TailwindCSS.
+- DB: Prisma with Neon PostgreSQL.
+- Auth/i18n: NextAuth v4, next-intl v4.
+- Growth plumbing: Resend leads/newsletter, price alerts, affiliate tracking, WhatsApp webhook.
+- Mobile: Expo React Native in `mobile/`.
 
-🛠️ The 5 Core Engines (Implementation Specs)
-WhatsApp NLP Bot (src/lib/bot-parser.ts): 8-regex extractor for raw text. Handles dealer intent and auto-creates PENDING listings with secret seller tokens.
+## Key Product Flows
 
-Battery Health Scoring (/api/battery-health): Weighted formula: (Retention * 0.45) + (Habits * 0.25) + (Thermal * 0.15) + (Electrical * 0.15).
+- Listings are submitted as `PENDING`; admin approves before they appear publicly.
+- Admin approval and seller verification are separate. Approval means "safe to show"; verification means seller contact was manually confirmed.
+- Admin review area: `/en/admin?key=<ADMIN_API_KEY>`.
+- Deal checker accepts ad text/URLs and scores buyer risk.
+- Battery-risk scoring lives in `src/lib/batteryHealth.ts`.
+- WhatsApp parser/bot logic lives in `src/lib/bot-parser.ts` and `src/lib/bot-engine.ts`.
+- Charging reliability/community data lives in `src/lib/communityDb.ts`.
+- Trip planning logic lives in `src/lib/tripPlanner.ts`.
 
-Deal Underwriter (/api/deal-check): URL-to-Score engine. 100-point scale comparing price vs. evModel.avgPrice. Tags: 🔥 Hot, ✅ Good, 📊 Fair.
+## Business Logic That Must Not Drift
 
-Greedy Trip Optimizer (src/lib/tripPlanner.ts): Point-to-segment Haversine algorithm. Greedily picks farthest station with 95% safety buffer. Adjusts for 45°C Pakistan heat.
+- Deal grade starts from a neutral score, rewards prices more than 10% below market, penalizes prices more than 15% above market, and penalizes missing battery or mileage data.
+- Battery risk combines range retention, charging habits, thermal health, and electrical warnings. Keep scoring centralized in `src/lib/batteryHealth.ts`.
+- Pakistan heat matters for range. Trip/range logic should keep the 45C heat penalty behavior unless product requirements change.
+- Station reliability is based on community availability signals, not static charger presence alone.
+- Import-duty and regulatory UI must be checked against current law before publishing because policy changes can make old guidance wrong.
 
-Community Reliability (src/lib/communityDb.ts): 7-day rolling window for station availability. Compares Wh/km savings against PKR 310/L petrol baseline.
+## Implementation Rules
 
-⚖️ SRO 61/2026 Regulatory Logic
-Strict compliance is mandatory for all Import-related UI/Logic:
+- Validate all API inputs. Reject unrealistic prices, negative numbers, scientific-notation numeric strings where inappropriate, invalid battery percentages, and impossible EV specs.
+- Prevent duplicate listings when ingesting scraped or manual inventory.
+- Never overwrite seller-provided or admin-reviewed records blindly.
+- Do not use immediately invoked functions inside JSX; define a small component/helper instead. This avoids App Router runtime chunk issues that can pass build but fail in-browser.
+- Keep UI modern but marketplace-efficient: clear hierarchy, fast listing scans, visible WhatsApp/contact actions, and no empty community/dashboard surfaces.
 
-Resale Ban: "Imported" status listings MUST show a "1-Year Resale Restriction" warning.
+## Commands Before Finishing Code Work
 
-Waiting Period: Enforce the 850-day interval between imports per CNIC.
+Run these unless the change is documentation-only:
 
-Duty-Free Cap: EVs under $30,000 USD value = 0% Customs Duty.
+```bash
+npx tsc --noEmit
+npm run lint
+npm run build
+```
 
-Abolished: No references to the "Personal Baggage" scheme. Use "Gift" or "TR" only.
+`npm run lint` may show existing warnings for hook dependencies and `<img>` usage. Warnings are acceptable; errors are not.
 
-🛠️ Execution Rules
-No Ghost Towns: If a page lacks data, implement a "Scraper-Fallback" or a WhatsApp CTA.
+## Development Rules
 
-No Dark UI: Keep it clean, professional, and high-trust.
+- TypeScript only for new files.
+- Keep edits targeted and avoid broad rewrites.
+- Use existing helpers in `src/lib` before adding new utilities.
+- Use Prisma for DB access.
+- User-facing copy should use i18n patterns where practical; avoid adding large hardcoded UI surfaces.
+- Use `ADMIN_API_KEY` for admin APIs. Do not introduce `ADMIN_KEY`.
+- New public listings must not bypass moderation unless explicitly requested.
 
-JetBrains-level UX: Heavy use of gradients, motion, and interactive cards for "Premium" feel.
+## Documentation Map
 
-Urdu First: All UI strings must be in messages/*.json. No hardcoded text.
-
-📂 Skills & Extensions
-Claude MUST follow and load all logic/patterns defined in:
-
-.claude/skills/*.md
-
-CONSOLIDATED_SPEC.md
+- Human quickstart: `README.md`
+- Technical detail: `docs/TECHNICAL.md`
+- Deployment: `docs/DEPLOYMENT.md`
+- Growth execution: `docs/GROWTH.md`
+- Active backlog: `tasks/backlog.md`

@@ -1,12 +1,14 @@
 // src/app/charging-map/page.tsx — Interactive charging station map
 import { Metadata } from "next";
-import dynamic from "next/dynamic";
+import nextDynamic from "next/dynamic";
 import { prisma } from "@/lib/prisma";
 import { ChargingStation } from "@/types";
 import ChargerReportButtons from "@/components/ChargerReportButtons";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import SaveStationToggle from "@/components/stations/SaveStationToggle";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "EV Charging Map Pakistan",
@@ -15,7 +17,7 @@ export const metadata: Metadata = {
 };
 
 // Load map client-side only (Leaflet requires browser APIs)
-const LeafletMap = dynamic(() => import("@/components/LeafletMap"), {
+const LeafletMap = nextDynamic(() => import("@/components/LeafletMap"), {
   ssr: false,
   loading: () => (
     <div className="rounded-xl flex items-center justify-center h-[520px]"

@@ -59,26 +59,66 @@ async function findEv(q: ParsedQuery) {
   return best;
 }
 
-// ── Pull real market prices from scraped listings ─────────────────────────────
-async function marketPrices(evName: string, city: string | null) {
+function normalizeText(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function isSameModel(name: string, model: string | null): boolean {
+  if (!model) return false;
+  const normalizedName = normalizeText(name);
+  const words = normalizeText(model).split(" ").filter(Boolean);
+  return words.length > 0 && words.every((word) => normalizedName.includes(word));
+}
+
+// ── Pull market prices with explicit confidence ───────────────────────────────
+async function marketPrices(evName: string, model: string | null, city: string | null) {
+  const brand = evName.split(" ")[0];
   const where: any = {
-    source: { not: "MANUAL" },
     status: "ACTIVE",
-    evName: { contains: evName.split(" ")[0] }, // match on brand at least
+    OR: [
+      { evName: { contains: brand } },
+      { evModel: { brand: { contains: brand } } },
+    ],
   };
   if (city) where.city = city;
 
   const listings = await prisma.listing.findMany({
     where,
-    select: { price: true },
+    select: {
+      price: true,
+      evName: true,
+      evModel: { select: { brand: true, model: true, variant: true } },
+    },
     orderBy: { createdAt: "desc" },
-    take: 20,
+    take: 50,
   });
 
-  if (listings.length < 3) return null;
-  const prices = listings.map(l => l.price).sort((a, b) => a - b);
+  const sameModel = listings.filter((listing) => {
+    const name = listing.evModel
+      ? `${listing.evModel.brand} ${listing.evModel.model} ${listing.evModel.variant ?? ""}`
+      : listing.evName ?? "";
+    return isSameModel(name, model);
+  });
+
+  const selected = sameModel.length >= 3 ? sameModel : listings;
+  if (selected.length < 3) return null;
+
+  const prices = selected.map(l => l.price).sort((a, b) => a - b);
   const mid = prices[Math.floor(prices.length / 2)];
-  return { median: mid, count: prices.length, min: prices[0], max: prices[prices.length - 1] };
+  const confidence = sameModel.length >= 8
+    ? "high"
+    : sameModel.length >= 3
+      ? "medium"
+      : "low";
+
+  return {
+    median: mid,
+    count: prices.length,
+    sameModelCount: sameModel.length,
+    confidence,
+    min: prices[0],
+    max: prices[prices.length - 1],
+  };
 }
 
 // ── Valuation (mirrors the API logic, no HTTP call needed) ────────────────────
@@ -148,7 +188,7 @@ async function autoCreateListing(q: ParsedQuery): Promise<string> {
       batteryHealth: q.batteryHealth ? (GRADE_TO_HEALTH[q.batteryHealth] ?? null) : null,
       contactPhone: q.contactPhone,
       contactWhatsapp: q.contactPhone,
-      status: "ACTIVE",
+      status: "PENDING",
       source: "WHATSAPP",
       sellerToken,
     } as any,
@@ -158,8 +198,9 @@ async function autoCreateListing(q: ParsedQuery): Promise<string> {
   const manageUrl  = `${BASE_URL}/en/listings/manage/${listing.id}?token=${sellerToken}`;
 
   return (
-    `✅ *Your ${evName} is now live on eWheelz!*\n\n` +
-    `🔗 Browse: ${listingUrl}\n\n` +
+    `✅ *Your ${evName} listing has been submitted to eWheelz!*\n\n` +
+    `Our team reviews new listings before they go live. Approved listings usually publish within 24 hours.\n\n` +
+    `🔗 Browse active listings: ${listingUrl}\n\n` +
     `🔒 *Manage your listing (save this link):*\n${manageUrl}\n\n` +
     `_Use the manage link to mark as sold or update price._\n` +
     `Reply with your listing text anytime to post another.`
@@ -201,16 +242,20 @@ export async function generateReply(text: string): Promise<string> {
   if (ev?.pricePkrMin) {
     const val = calculateValue(ev.pricePkrMin, year, odometer);
 
-    // Enrich with real scraped market data if available
-    const market = await marketPrices(evLabel, q.city);
+    const market = await marketPrices(evLabel, q.model, q.city);
+    const priceMin = market ? Math.round(market.median * 0.93) : val.min;
+    const priceMax = market ? Math.round(market.median * 1.07) : val.max;
     const sourceNote = market
-      ? `_(based on ${market.count} real listings in ${city})_`
-      : `_(formula-based — improves as listings grow)_`;
+      ? market.confidence === "low"
+        ? `_(low confidence: ${market.count} broad brand comps; verify variant manually)_`
+        : `_(confidence: ${market.confidence}; ${market.sameModelCount} same-model comps)_`
+      : `_(formula estimate only — not enough comparable listings yet)_`;
 
-    priceSection = `💰 *Fair market price: ${fmt(val.min)} – ${fmt(val.max)}*\n${sourceNote}`;
+    priceSection = `💰 *Fair market price: ${fmt(priceMin)} – ${fmt(priceMax)}*\n${sourceNote}`;
 
     if (q.dealerPrice) {
-      const diff = q.dealerPrice - val.mid;
+      const reference = market?.median ?? val.mid;
+      const diff = q.dealerPrice - reference;
       if (diff > 100_000) {
         priceSection += `\n⚠️ Dealer is *${fmt(diff)} OVER* market — you can negotiate.`;
       } else if (diff < -100_000) {
@@ -220,7 +265,7 @@ export async function generateReply(text: string): Promise<string> {
       }
     }
   } else {
-    priceSection = `💰 No price data for ${evLabel} yet — check ewheelz.com/ev-valuation`;
+    priceSection = `💰 No reliable price data for ${evLabel} yet — check ewheelz.com/ev-valuation`;
   }
 
   const battery = batterySection(q, ev?.slug ?? null);

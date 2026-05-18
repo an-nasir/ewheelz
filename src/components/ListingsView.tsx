@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useLocale } from "next-intl";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import ScamReportButton from "@/components/ScamReportButton";
+import { getListingTrust, getSourceLabel } from "@/lib/listingTrust";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -22,6 +23,8 @@ interface ListingItem {
   description: string | null;
   images: string | null;
   contactName: string | null;
+  contactPhone: string | null;
+  contactWhatsapp: string | null;
   source: string;
   sourceUrl: string | null;
   dealGrade: string | null;
@@ -113,7 +116,19 @@ function BatteryGradeBadge({ health }: { health: number | null }) {
   return (
     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black whitespace-nowrap"
       style={{ background: `${gc}15`, color: gc, border: `1px solid ${gc}30` }}>
-      🔋 Grade {grade}
+      Battery signal {grade}
+    </span>
+  );
+}
+
+function TrustBadge({ listing }: { listing: ListingItem }) {
+  const trust = getListingTrust(listing);
+  return (
+    <span
+      title={trust.description}
+      className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-black ${trust.badgeClass}`}
+    >
+      {trust.shortLabel}
     </span>
   );
 }
@@ -138,6 +153,7 @@ function CardView({ listing, idx, locale }: { listing: ListingItem; idx: number;
   const img = getFirstImage(listing);
   const fallback = getBrandFallback(listing);
   const evLabel = `${listing.evModel?.brand ?? listing.evName ?? "EV"} ${listing.evModel?.model ?? ""}`.trim();
+  const sourceLabel = getSourceLabel(listing.source);
 
   return (
     <div className="group rounded-2xl overflow-hidden hover-lift"
@@ -197,15 +213,10 @@ function CardView({ listing, idx, locale }: { listing: ListingItem; idx: number;
                 {listing.source && listing.source.toUpperCase() !== "MANUAL" && (
                   <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold"
                     style={{ background: "#F6F8FF", color: "#94A3B8", border: "1px solid #E6E9F2" }}>
-                    via {listing.source.toUpperCase() === "PAKWHEELS" ? "PakWheels" : "OLX"}
+                    via {sourceLabel}
                   </span>
                 )}
-                {listing.verifiedSeller && (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black"
-                    style={{ background: "#EEF2FF", color: "#4F46E5", border: "1px solid #C7D2FE" }}>
-                    ✅ Verified
-                  </span>
-                )}
+                <TrustBadge listing={listing} />
               </div>
             </div>
 
@@ -219,11 +230,16 @@ function CardView({ listing, idx, locale }: { listing: ListingItem; idx: number;
                 <div className="text-xs text-slate-400 mt-0.5">PKR {listing.price.toLocaleString()}</div>
               </div>
               <WhatsAppButton
+                listingId={listing.id}
                 brand={listing.evModel?.brand ?? listing.evName ?? "EV"}
                 model={listing.evModel?.model ?? ""}
                 year={listing.year}
                 price={listing.price}
                 city={listing.city}
+                contactPhone={listing.contactPhone}
+                contactWhatsapp={listing.contactWhatsapp}
+                source={listing.source}
+                sourceUrl={listing.sourceUrl}
               />
               <Link href={`/${locale}/listings/${listing.id}`}
                 className="text-[11px] text-indigo-500 hover:text-indigo-700 font-semibold transition-colors">
@@ -251,6 +267,8 @@ function GridCard({ listing, locale }: { listing: ListingItem; locale: string })
   const img = getFirstImage(listing);
   const fallback = getBrandFallback(listing);
   const evLabel = `${listing.evModel?.brand ?? listing.evName ?? "EV"} ${listing.evModel?.model ?? ""}`.trim();
+  const trust = getListingTrust(listing);
+  const sourceLabel = getSourceLabel(listing.source);
 
   return (
     <div className="group rounded-2xl overflow-hidden transition-all hover:shadow-lg hover:-translate-y-1"
@@ -269,7 +287,7 @@ function GridCard({ listing, locale }: { listing: ListingItem; locale: string })
           <div className="absolute top-2 right-2">
             <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold backdrop-blur-sm"
               style={{ background: "rgba(255,255,255,0.85)", color: "#64748B" }}>
-              {listing.source.toUpperCase() === "PAKWHEELS" ? "PakWheels" : "OLX"}
+              {sourceLabel}
             </span>
           </div>
         )}
@@ -289,6 +307,12 @@ function GridCard({ listing, locale }: { listing: ListingItem; locale: string })
           </span>
           <span className="text-[10px] text-slate-400">{listing.year}</span>
           <span className="text-[10px] text-slate-400">📍 {listing.city}</span>
+          <span
+            title={trust.description}
+            className={`rounded-full border px-2 py-0.5 text-[10px] font-black ${trust.badgeClass}`}
+          >
+            {trust.shortLabel}
+          </span>
         </div>
 
         {listing.mileage != null && (
@@ -301,11 +325,16 @@ function GridCard({ listing, locale }: { listing: ListingItem; locale: string })
             PKR {(listing.price / 1_000_000).toFixed(2)}M
           </div>
           <WhatsAppButton
+            listingId={listing.id}
             brand={listing.evModel?.brand ?? listing.evName ?? "EV"}
             model={listing.evModel?.model ?? ""}
             year={listing.year}
             price={listing.price}
             city={listing.city}
+            contactPhone={listing.contactPhone}
+            contactWhatsapp={listing.contactWhatsapp}
+            source={listing.source}
+            sourceUrl={listing.sourceUrl}
           />
         </div>
       </div>

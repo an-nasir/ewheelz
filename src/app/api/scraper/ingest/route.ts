@@ -147,12 +147,14 @@ export async function POST(req: NextRequest) {
       mileage:     mileage ?? null,
       city,
       condition:   "USED" as const,
-      status:      "ACTIVE",
+      status:      "PENDING",
       source:      sourceName,
       sourceUrl:   raw.source_url,
       dealGrade,
       images:      imagesJson,
-      description: raw.date ? `Listed on ${raw.source}: ${raw.date}` : `Scraped from ${raw.source}`,
+      description: raw.date
+        ? `Source candidate from ${raw.source}: ${raw.date}. Seller/contact not verified by eWheelz.`
+        : `Source candidate from ${raw.source}. Seller/contact not verified by eWheelz.`,
     };
 
     try {

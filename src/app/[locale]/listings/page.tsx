@@ -3,9 +3,11 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import ListingsView from "@/components/ListingsView";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Used Electric Cars for Sale in Pakistan — BYD, MG, Hyundai | eWheelz",
-  description: "Browse 377+ used EV listings across Pakistan. Battery grade on every car. Buy BYD, MG ZS EV, Hyundai IONIQ and more with confidence.",
+  description: "Browse active used EV listings across Pakistan with source labels, battery risk signals where available, and seller contact status.",
 };
 
 interface SearchParams { city?: string; brand?: string; min_price?: string; max_price?: string }

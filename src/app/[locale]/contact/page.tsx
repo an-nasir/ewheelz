@@ -49,7 +49,7 @@ export default function ContactPage() {
 
       <div className="mt-10 rounded-2xl p-6" style={{ background: "#F8FAFC", border: "1px solid #E6E9F2" }}>
         <div className="font-black text-slate-900 mb-1">Report a fraudulent listing</div>
-        <p className="text-sm text-slate-500">Send us the listing URL on WhatsApp with a brief description and we'll investigate within 24 hours.</p>
+        <p className="text-sm text-slate-500">Send us the listing URL on WhatsApp with a brief description and we&apos;ll investigate within 24 hours.</p>
       </div>
     </div>
   );

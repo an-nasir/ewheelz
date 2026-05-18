@@ -2,6 +2,8 @@
 import { MetadataRoute } from "next";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 const BASE = process.env.NEXT_PUBLIC_BASE_URL ?? "https://ewheelz.pk";
 
 const CITIES  = ["karachi","lahore","islamabad","rawalpindi","faisalabad","multan","peshawar"];

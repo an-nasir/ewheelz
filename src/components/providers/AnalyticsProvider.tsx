@@ -16,7 +16,8 @@ export default function AnalyticsProvider({ children }: { children: React.ReactN
     if (!PH_KEY) return;
     if (!ready) {
       posthog.init(PH_KEY, {
-        api_host: "https://app.posthog.com",
+        api_host: "https://us.i.posthog.com",
+        defaults: "2026-01-30",
         capture_pageview: false,        // manual below
         session_recording: { maskAllInputs: false },
       });

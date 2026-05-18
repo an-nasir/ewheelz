@@ -4,10 +4,11 @@
 // POST { listingId } — secured by ADMIN_API_KEY header
 
 import { NextRequest, NextResponse } from "next/server";
+
+import { requireAdmin } from "@/lib/adminAuth";
 import { prisma } from "@/lib/prisma";
 
 const EXPO_PUSH_URL = "https://exp.host/--/api/v2/push/send";
-const ADMIN_KEY     = process.env.ADMIN_API_KEY ?? "";
 
 interface PushMessage {
   to:    string;
@@ -33,11 +34,8 @@ async function sendExpoPush(messages: PushMessage[]) {
 }
 
 export async function POST(req: NextRequest) {
-  // Auth check
-  const key = req.headers.get("x-admin-key") ?? req.headers.get("authorization")?.replace("Bearer ", "");
-  if (ADMIN_KEY && key !== ADMIN_KEY) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const authError = requireAdmin(req);
+  if (authError) return authError;
 
   const { listingId } = await req.json();
   if (!listingId) return NextResponse.json({ error: "listingId required" }, { status: 400 });
@@ -88,10 +86,8 @@ export async function POST(req: NextRequest) {
 
 // GET /api/push/send?since=2024-01-01 — check for new listings to push (cron endpoint)
 export async function GET(req: NextRequest) {
-  const key = req.headers.get("x-admin-key") ?? req.nextUrl.searchParams.get("key");
-  if (ADMIN_KEY && key !== ADMIN_KEY) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const authError = requireAdmin(req);
+  if (authError) return authError;
 
   // Find listings created in the last 10 minutes (cron runs every 10 min)
   const since = new Date(Date.now() - 10 * 60 * 1000);

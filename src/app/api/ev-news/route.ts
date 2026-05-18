@@ -4,6 +4,8 @@
 
 import { NextResponse } from "next/server";
 
+export const dynamic = "force-dynamic";
+
 const FEEDS = [
   // Pakistani news — EV/auto sections
   { source: "Dawn",            url: "https://www.dawn.com/feeds/home", country: "🇵🇰" },

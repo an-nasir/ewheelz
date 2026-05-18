@@ -30,7 +30,8 @@ const GROUPS = [
   {
     id: "insights", label: "Insights",
     items: [
-      { href: "/battery-health",  icon: "🔋", title: "Battery Health",  desc: "A–F grade in 30 sec. #1 hidden cost", color: "#22C55E", badge: "Free" },
+      { href: "/battery-health",  icon: "🔋", title: "Battery Health",  desc: "Estimate battery risk before inspection", color: "#22C55E", badge: "Free" },
+      { href: "/batteries",       icon: "⚡", title: "Battery Guide",   desc: "LFP vs NMC — which survives 45°C?",   color: "#F59E0B" },
       { href: "/ev-valuation",    icon: "💰", title: "Resale Value",    desc: "Real PKR range, no dealer BS",         color: "#8B5CF6" },
       { href: "/import-duty",     icon: "📦", title: "Import Duty",     desc: "Exact duties on any EV to Pakistan",   color: "#EC4899", badge: "Only here" },
       { href: "/price-index",     icon: "📈", title: "Price Index",     desc: "6-month trend charts, live data",      color: "#34D399", badge: "Live" },

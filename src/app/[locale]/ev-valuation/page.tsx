@@ -4,6 +4,8 @@ import { Suspense } from "react";
 import { prisma } from "@/lib/prisma";
 import ValuationClient from "./ValuationClient";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "EV Resale Value Calculator Pakistan | eWheelz",
   description: "What's your used EV worth in Pakistan? Get a real PKR valuation in seconds.",
@@ -66,7 +68,7 @@ export default async function EvValuationPage() {
               {[
                 { icon: "📅", label: "Age", desc: "Year-over-year depreciation curve for each EV model" },
                 { icon: "🛣️", label: "Mileage", desc: "Beyond 20,000 km/year reduces value further" },
-                { icon: "🔋", label: "Battery grade", desc: "Grade C vs A = PKR 3–8 lakh swing" },
+                { icon: "🔋", label: "Battery signal", desc: "Weak vs strong battery evidence can move price by lakhs" },
                 { icon: "📍", label: "City market", desc: "Karachi vs Lahore demand differences" },
                 { icon: "⭐", label: "Condition", desc: "Cosmetic and mechanical state" },
               ].map(item => (
@@ -91,7 +93,7 @@ export default async function EvValuationPage() {
 
           {/* Cross-sell */}
           <div className="bg-emerald-50 border border-emerald-100 rounded-3xl p-5">
-            <div className="font-black text-slate-900 text-sm mb-1">Don&apos;t know your battery grade?</div>
+            <div className="font-black text-slate-900 text-sm mb-1">Don&apos;t know your battery risk?</div>
             <div className="text-xs text-slate-500 mb-3">Run a free battery check first for a more accurate valuation.</div>
             <a href="/battery-health"
               className="block w-full py-3 rounded-xl font-black text-sm text-center border-2 border-emerald-600 text-emerald-700 hover:bg-emerald-100 transition-all">

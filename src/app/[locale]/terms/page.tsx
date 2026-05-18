@@ -24,7 +24,7 @@ export default function TermsPage() {
         </section>
         <section>
           <h2 className="text-base font-black text-slate-900 mb-2">Liability</h2>
-          <p>eWheelz is provided "as is". We are not liable for any loss arising from use of the platform, including fraudulent listings or failed transactions.</p>
+          <p>eWheelz is provided &quot;as is&quot;. We are not liable for any loss arising from use of the platform, including fraudulent listings or failed transactions.</p>
         </section>
         <section>
           <h2 className="text-base font-black text-slate-900 mb-2">Contact</h2>

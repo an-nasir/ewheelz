@@ -10,7 +10,7 @@ const REASONS = [
   "Seller unreachable / phone off",
   "Already sold, still listed",
   "Odometer tampered",
-  "Battery grade misrepresented",
+  "Battery signal misrepresented",
   "Other fraud / scam",
 ];
 

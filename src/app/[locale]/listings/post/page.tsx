@@ -100,11 +100,13 @@ export default function PostListingPage() {
             style={{ background: "linear-gradient(135deg,#22C55E,#10B981)", boxShadow: "0 8px 32px rgba(34,197,94,0.30)" }}>
             ✓
           </div>
-          <h1 className="text-2xl font-black text-slate-900 mb-2">Listing Live!</h1>
-          <p className="text-slate-500 mb-5">{form.brand} {form.model} is active. Buyers can contact you now.</p>
+          <h1 className="text-2xl font-black text-slate-900 mb-2">Listing Submitted</h1>
+          <p className="text-slate-500 mb-5">
+            {form.brand} {form.model} is pending review. Approved listings usually go live within 24 hours.
+          </p>
           {manageUrl && (
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4 text-left">
-              <p className="text-xs font-black text-amber-700 uppercase tracking-wider mb-1">⚠️ Save this link (shown once)</p>
+              <p className="text-xs font-black text-amber-700 uppercase tracking-wider mb-1">Save this link (shown once)</p>
               <div className="bg-white rounded border border-amber-200 px-2 py-1 text-[10px] font-mono text-slate-700 break-all mb-1.5">
                 {typeof window !== "undefined" ? window.location.origin : ""}{manageUrl}
               </div>
@@ -117,7 +119,7 @@ export default function PostListingPage() {
           <div className="flex flex-col gap-2">
             <Link href="/listings" className="px-6 py-3 rounded-lg text-sm font-black text-white transition-all"
               style={{ background: "linear-gradient(135deg,#6366F1,#8B5CF6)" }}>
-              Browse More EVs →
+              Browse More EVs
             </Link>
             <button onClick={() => { setSubmitted(false); setForm(f => ({ ...f, brand: "", model: "", price: "", contactName: "", contactPhone: "" })); }}
               className="text-sm text-slate-400 hover:text-slate-600">
@@ -227,7 +229,7 @@ export default function PostListingPage() {
                   </div>
                 </div>
                 <div>
-                  <label className="text-xs font-black text-slate-500 uppercase tracking-wider block mb-1">Battery Grade</label>
+                  <label className="text-xs font-black text-slate-500 uppercase tracking-wider block mb-1">Claimed Battery Signal</label>
                   <div className="flex gap-1">
                     {(["A","B","C","D","F"]).map(g => (
                       <button key={g} onClick={() => set("batteryHealth", g)}
@@ -262,7 +264,7 @@ export default function PostListingPage() {
               <div className="text-xl mb-1">✨</div>
               <div className="font-black text-slate-900 text-sm mb-0.5">Magic AI Fill</div>
               <p className="text-xs text-slate-500 mb-3 leading-relaxed">
-                Paste a WhatsApp ad or OLX listing. We'll auto-fill your form.
+                Paste a WhatsApp ad or OLX listing. We&apos;ll auto-fill your form.
               </p>
 
               <textarea value={magicText} onChange={(e) => setMagicText(e.target.value)}

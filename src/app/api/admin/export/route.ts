@@ -1,15 +1,15 @@
 // src/app/api/admin/export/route.ts
-// GET /api/admin/export?key=ADMIN_KEY
+// GET /api/admin/export?key=ADMIN_API_KEY
 // Dumps full DB as a single JSON snapshot — use to backup before Neon migration.
 
 import { NextRequest, NextResponse } from "next/server";
+
+import { requireAdmin } from "@/lib/adminAuth";
 import { prisma } from "@/lib/prisma";
 
-const ADMIN_KEY = process.env.ADMIN_KEY ?? "ewheelz-admin-change-me";
-
 export async function GET(req: NextRequest) {
-  if (req.nextUrl.searchParams.get("key") !== ADMIN_KEY)
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const authError = requireAdmin(req);
+  if (authError) return authError;
 
   const [
     listings, evModels, chargingStations,

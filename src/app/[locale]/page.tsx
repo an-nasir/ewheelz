@@ -5,9 +5,11 @@ import AnimatedHero from "@/components/AnimatedHero";
 import DealChecker from "@/components/DealChecker";
 import type { Metadata } from "next";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
-  title: "eWheelz — Pakistan's Verified Used EV Marketplace",
-  description: "Buy and sell used EVs in Pakistan with confidence. Every listing has a battery health grade. No scams, no surprises.",
+  title: "eWheelz — Pakistan EV Deal Check & Seller Intros",
+  description: "Check used EV prices, battery risk, and seller contact quality in Pakistan before you pay token money.",
 };
 
 // Brand → Unsplash image map (free, already in next.config allowlist)
@@ -49,7 +51,7 @@ function ListingCard({ listing, brandAvg }: { listing: any; brandAvg?: number })
           style={{ background: "rgba(15,23,42,0.65)", backdropFilter: "blur(4px)" }}>
           {brand !== "default" ? brand : "EV"}
         </div>
-        {/* Battery grade top-right */}
+        {/* Battery signal top-right */}
         {grade && (
           <div className="absolute top-3 right-3 w-8 h-8 rounded-xl flex items-center justify-center font-black text-sm text-white"
             style={{ background: gradeColor, boxShadow: `0 2px 8px ${gradeColor}60` }}>
@@ -158,86 +160,84 @@ export default async function HomePage() {
       {/* ── 1. Hero — 2-col with car image ──────────────────────────────────── */}
       <AnimatedHero totalListings={totalListings} />
 
-      {/* Top bridge — melts into section */}
-      <div style={{ height: 32, background: "linear-gradient(to bottom, #ffffff, rgba(245,243,255,0.5))" }} />
+      {/* ── Dark zone: hero fades in → comparison → market pulse → fades out ── */}
+      <div style={{ background: "#0F172A" }}>
 
-      {/* ── 2. Corolla vs EV — high up, hooks petrol-car owners immediately ─── */}
-      <section style={{ background: "linear-gradient(180deg, rgba(245,243,255,0.5) 0%, rgba(250,251,255,0.7) 100%)" }}>
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12">
-          {/* Badge + intro */}
-          <div className="mb-8 text-center max-w-2xl mx-auto">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest mb-4"
-              style={{ background: "rgba(34,197,94,0.15)", color: "#4ADE80", border: "1px solid rgba(34,197,94,0.25)" }}>
-              🚗 Still driving a Corolla?
-            </div>
-            <h2 className="text-3xl sm:text-4xl font-black text-slate-900 mb-3 leading-tight">
-              You&apos;re burning <span style={{ color: "#EF4444" }}>PKR 500K/year</span> on fuel
-            </h2>
-            <p className="text-slate-600 text-base leading-relaxed">
-              EV energy costs PKR 3/km. Petrol costs PKR 20/km. That&apos;s PKR 425,000 saved every single year.
-            </p>
+        {/* Catchy label */}
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 pb-5 flex items-center gap-3">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest"
+            style={{ background: "rgba(239,68,68,0.12)", color: "#F87171", border: "1px solid rgba(239,68,68,0.25)" }}>
+            <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
+            Still burning fuel on ICEs?
           </div>
+          <span className="text-slate-500 text-sm hidden sm:block">Here&apos;s what it&apos;s actually costing you.</span>
+        </div>
 
-          {/* Comparison card */}
-          <div className="rounded-3xl overflow-hidden border border-[#E6E9F2] shadow-sm">
-            <div className="grid sm:grid-cols-2">
-              {/* Left — Corolla (red) */}
-              <div style={{ background: "linear-gradient(135deg, #FEF2F2, #FEE2E2)" }} className="p-8 sm:p-10">
-                <div className="text-xs font-black text-red-600 uppercase tracking-widest mb-3">Your Current Car</div>
-                <div className="text-2xl font-black text-slate-900 mb-2">Toyota Corolla 1600cc</div>
-                <div className="text-sm text-slate-600 mb-6">City driving, petrol @ PKR 280/L</div>
+        {/* ── 2. Cost comparison ─────────────────────────────────────────────── */}
+        <div style={{ borderTop: "1px solid #1E293B", borderBottom: "1px solid #1E293B" }}>
+          <div className="grid sm:grid-cols-[1fr_160px_1fr] max-w-5xl mx-auto">
 
-                <div className="space-y-3 mb-8">
-                  <div className="rounded-2xl p-4" style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.15)" }}>
-                    <div className="text-xs text-slate-500 mb-1">Per km cost</div>
-                    <div className="text-2xl font-black text-red-600">PKR 20</div>
-                  </div>
-                  <div className="rounded-2xl p-4" style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.15)" }}>
-                    <div className="text-xs text-slate-500 mb-1">Annual fuel (25k km)</div>
-                    <div className="text-2xl font-black text-red-600">PKR 500K</div>
-                  </div>
-                </div>
+            {/* Left — Petrol */}
+            <div className="p-6 sm:p-8">
+              <div className="flex items-center gap-1.5 mb-4">
+                <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
+                <span className="text-[10px] font-black text-red-400 uppercase tracking-widest">Your Petrol Car</span>
               </div>
-
-              {/* Right — EV (green) */}
-              <div style={{ background: "linear-gradient(135deg, #F0FDF4, #DCFCE7)" }} className="p-8 sm:p-10">
-                <div className="text-xs font-black text-green-600 uppercase tracking-widest mb-3">Switch to EV</div>
-                <div className="text-2xl font-black text-slate-900 mb-2">BYD Seal / Atto 3</div>
-                <div className="text-sm text-slate-600 mb-6">Electric, grid avg @ PKR 50/kWh</div>
-
-                <div className="space-y-3 mb-8">
-                  <div className="rounded-2xl p-4" style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.15)" }}>
-                    <div className="text-xs text-slate-500 mb-1">Per km cost</div>
-                    <div className="text-2xl font-black text-green-600">PKR 3</div>
-                  </div>
-                  <div className="rounded-2xl p-4" style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.15)" }}>
-                    <div className="text-xs text-slate-500 mb-1">Annual energy (25k km)</div>
-                    <div className="text-2xl font-black text-green-600">PKR 75K</div>
-                  </div>
+              <div className="text-4xl sm:text-5xl font-black text-red-400 leading-none mb-1">PKR 20<span className="text-2xl text-red-500/70">/km</span></div>
+              <div className="text-sm text-slate-400 mb-5">PKR 500,000 burned every year</div>
+              <div>
+                <div className="flex justify-between text-[11px] text-slate-500 mb-1.5">
+                  <span>Fuel cost vs EV</span><span className="text-red-400 font-black">87%</span>
+                </div>
+                <div className="h-1.5 rounded-full bg-slate-800">
+                  <div className="h-full rounded-full bg-gradient-to-r from-red-700 to-red-400" style={{ width: "87%" }} />
                 </div>
               </div>
             </div>
+
+            {/* Center — savings */}
+            <div className="flex items-center justify-center border-x border-slate-800 py-6 px-3">
+              <div className="text-center">
+                <div className="text-[9px] font-black text-indigo-300 uppercase tracking-widest mb-1">you save</div>
+                <div className="text-3xl font-black text-white leading-none">425K</div>
+                <div className="text-[10px] text-indigo-300 mt-0.5">per year</div>
+                <div className="mt-3 text-[9px] font-black text-indigo-400 border border-indigo-500/30 rounded-full px-2 py-0.5">
+                  = 2.1M over 5 yrs
+                </div>
+              </div>
+            </div>
+
+            {/* Right — EV */}
+            <div className="p-6 sm:p-8">
+              <div className="flex items-center gap-1.5 mb-4">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                <span className="text-[10px] font-black text-green-400 uppercase tracking-widest">With an EV</span>
+              </div>
+              <div className="text-4xl sm:text-5xl font-black text-green-400 leading-none mb-1">PKR 3<span className="text-2xl text-green-500/70">/km</span></div>
+              <div className="text-sm text-slate-400 mb-5">PKR 75,000 per year. That&apos;s it.</div>
+              <div>
+                <div className="flex justify-between text-[11px] text-slate-500 mb-1.5">
+                  <span>Energy cost vs Petrol</span><span className="text-green-400 font-black">13%</span>
+                </div>
+                <div className="h-1.5 rounded-full bg-slate-800">
+                  <div className="h-full rounded-full bg-gradient-to-r from-green-700 to-emerald-400" style={{ width: "13%" }} />
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* Savings highlight */}
-          <div className="mt-8 rounded-3xl p-8 text-center" style={{ background: "linear-gradient(135deg, #6366F1, #8B5CF6)" }}>
-            <div className="text-sm font-black text-indigo-100 uppercase tracking-widest mb-2">Annual savings</div>
-            <div className="text-5xl font-black text-white mb-2">PKR 425,000</div>
-            <div className="text-indigo-100 text-sm">That&apos;s PKR 2.1M over 5 years — enough to cover your EV EMI</div>
-            <Link href="/listings?brand=BYD" className="inline-block mt-6 px-8 py-4 rounded-2xl text-sm font-black text-white transition-all hover:scale-105"
-              style={{ background: "rgba(255,255,255,0.2)", border: "2px solid rgba(255,255,255,0.3)" }}>
-              See affordable EVs in Pakistan →
+          {/* Footer row */}
+          <div className="border-t border-slate-800 py-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 max-w-5xl mx-auto px-6 sm:px-8">
+            <span className="text-[10px] text-slate-600">25,000 km/yr · Petrol PKR 280/L · Grid PKR 50/kWh</span>
+            <Link href="/listings" className="text-xs font-black text-white px-4 py-2 rounded-xl transition-all hover:opacity-90 shrink-0"
+              style={{ background: "linear-gradient(135deg, #6366F1, #8B5CF6)" }}>
+              Browse EVs in your budget →
             </Link>
           </div>
         </div>
-      </section>
 
-      {/* Bottom bridge — melts into dark section */}
-      <div style={{ height: 32, background: "linear-gradient(to bottom, rgba(250,251,255,0.7), #0F172A)" }} />
-
-      {/* ── 3. Market Pulse — dark, each card links to filtered listings ─────── */}
-      {pulse.length > 0 && (
-        <section style={{ background: "#0F172A" }}>
+        {/* ── 3. Market Pulse — flows directly from comparison ─────────────── */}
+        {pulse.length > 0 && (
           <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
             <div className="flex items-center gap-2 mb-4">
               <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
@@ -257,10 +257,11 @@ export default async function HomePage() {
               ))}
             </div>
           </div>
-        </section>
-      )}
+        )}
 
-      <div style={{ height: 32, background: "linear-gradient(to bottom, #0F172A, #F6F8FF)" }} />
+        {/* Gradient exit back to light */}
+        <div style={{ height: 56, background: "linear-gradient(to bottom, #0F172A, #F6F8FF)" }} />
+      </div>
 
       {/* ── 5. Hot Deals — algo-picked listings priced 10%+ below market ─── */}
       {hotDeals.length > 0 && (
@@ -394,7 +395,7 @@ export default async function HomePage() {
 
           <div className="relative max-w-5xl mx-auto px-4 sm:px-6 py-12">
             <h2 className="text-4xl font-black text-white mb-2 leading-tight">Tools That Sell</h2>
-            <p className="text-slate-300 text-lg max-w-2xl mb-6">Every listing advantage you're missing vs competitors. Free. No sign-up. No fees.</p>
+            <p className="text-slate-300 text-lg max-w-2xl mb-6">Every listing advantage you&apos;re missing vs competitors. Free. No sign-up. No fees.</p>
 
             <div className="flex flex-wrap gap-3">
               {[
@@ -416,7 +417,7 @@ export default async function HomePage() {
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10">
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {[
-              { href: "/battery-health", icon: "🔋", title: "Battery Health", benefit: "A–F grade in 30 sec", color: "#22C55E" },
+              { href: "/battery-health", icon: "🔋", title: "Battery Health", benefit: "Estimate risk before inspection", color: "#22C55E" },
               { href: "/ev-valuation", icon: "💰", title: "Resale Valuation", benefit: "Real PKR range", color: "#A78BFA" },
               { href: "/import-duty", icon: "📦", title: "Import Duty", benefit: "Exact breakdown", color: "#EC4899" },
               { href: "/cost-calculator", icon: "📊", title: "Cost Calculator", benefit: "5-year savings", color: "#34D399" },

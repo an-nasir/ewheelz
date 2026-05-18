@@ -38,7 +38,7 @@ export default function Footer() {
                 <span className="font-black text-slate-900">eWheelz</span>
               </div>
               <p className="text-xs text-slate-500 leading-relaxed mb-3">
-                Pakistan's verified EV marketplace. Battery grades on every listing.
+                Pakistan EV deal-check and seller-intro layer. Battery risk signals where available.
               </p>
               <div className="flex gap-2">
                 {["FB","TW","IG"].map(s => (
@@ -122,7 +122,7 @@ export default function Footer() {
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-            <span>Trusted by 10K+ EV owners in Pakistan</span>
+            <span>Built for verified EV buyer-seller intros in Pakistan</span>
           </div>
         </div>
       </div>

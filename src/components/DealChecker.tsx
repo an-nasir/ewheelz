@@ -34,7 +34,11 @@ export default function DealChecker() {
       });
       if (!res.ok) throw new Error("Failed");
       const data = await res.json();
-      track("deal_check_result", { verdict: data.analysis?.verdict, score: data.analysis?.score });
+      track("deal_check_result", {
+        verdict: data.analysis?.verdict,
+        score: data.analysis?.score,
+        confidence: data.priceConfidence?.level,
+      });
       setResult(data);
     } catch {
       setError("Something went wrong. Try again.");
@@ -51,7 +55,7 @@ export default function DealChecker() {
       <textarea
         value={text}
         onChange={e => setText(e.target.value)}
-        placeholder={"Paste any WhatsApp or OLX EV ad here...\n\ne.g. \"2023 BYD Atto 3, Lahore, 45k km, 8.5M, battery grade A, serious buyers only\""}
+        placeholder={"Paste any WhatsApp or OLX EV ad here...\n\ne.g. \"2023 BYD Atto 3, Lahore, 45k km, 8.5M, claimed battery signal A, serious buyers only\""}
         rows={4}
         className="w-full rounded-2xl border-2 border-slate-200 px-5 py-4 text-sm focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none resize-none bg-white transition-all"
       />
@@ -79,6 +83,14 @@ export default function DealChecker() {
           </div>
 
           <p className="text-sm font-semibold text-slate-700">{result.analysis.priceVerdict}</p>
+
+          {result.priceConfidence && (
+            <div className="rounded-xl border border-white/70 bg-white px-4 py-3 text-xs text-slate-600">
+              <strong className="text-slate-800">{result.priceConfidence.label}</strong>
+              {" · "}
+              {result.priceConfidence.reason}
+            </div>
+          )}
 
           {/* Market range */}
           {result.avgMarketPrice && (
