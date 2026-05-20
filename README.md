@@ -77,6 +77,7 @@ OPENCHARGEMMAP_API_KEY=""
 - Technical architecture: `docs/TECHNICAL.md`
 - Deployment: `docs/DEPLOYMENT.md`
 - Growth execution: `docs/GROWTH.md`
+- Monetization plan: `docs/MONETIZATION.md`
 - Active backlog: `tasks/backlog.md`
 
 ## Operating Priority
